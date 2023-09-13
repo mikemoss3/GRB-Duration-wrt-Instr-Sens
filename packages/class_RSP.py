@@ -29,16 +29,9 @@ class ResponseMatrix(object):
 		self.num_phot_bins = num_phot_bins
 		self.num_chans = num_chans
 		
-		ENERG_AX = make_en_axis(E_phot_min, E_phot_max, num_phot_bins)
-		self.ENERG_LO = ENERG_AX['Elo'] # Incoming photon energy, lower bound
-		self.ENERG_MID =  ENERG_AX['Emid'] # Incoming photon energy, bin center
-		self.ENERG_HI =  ENERG_AX['Ehi'] # Incoming photon energy, upper bound
+		self.set_E_phot(E_phot_min=E_phot_min, E_phot_max=E_phot_max, num_phot_bins=num_phot_bins,verbose=False)
+		self.set_E_chans(E_chan_min=E_chan_min,E_chan_max=E_chan_max,num_chans=num_chans,verbose=False)
 		
-		ECHAN_AX = make_en_axis(E_chan_min, E_chan_max, num_chans)
-		self.ECHAN_LO = ECHAN_AX['Elo'] # Instrument energy channel lower bound
-		self.ECHAN_MID = ECHAN_AX['Emid'] # Instrument energy channel center
-		self.ECHAN_HI = ECHAN_AX['Ehi'] # Instrument energy channel upper bound
-
 		self.N_GRP = np.ones(shape=num_phot_bins) # The number of 'channel subsets' for for the energy bin
 		self.F_CHAN = np.zeros(shape=num_phot_bins) # The channel number of the start of each "channel subset" for the energy bin
 		self.N_CHAN = np.ones(shape=num_phot_bins)*num_chans # The number of channels within each "channel subset" for the energy bin
@@ -47,22 +40,26 @@ class ResponseMatrix(object):
 		self.make_empty_resp() # Contains all the response probability values for each
 		# 						'channel subset' corresponding to the energy bin for a given row
 
-	def set_E_phot(self,E_phot_min=0,E_phot_max=500,num_phot_bins=200):
+	def set_E_phot(self,E_phot_min=0,E_phot_max=500,num_phot_bins=200,verbose=True):
 		""" Class method to set the photon energy axis""" 
 		ENERG_AX = make_en_axis(E_phot_min, E_phot_max, num_phot_bins)
 		self.num_phot_bins = num_phot_bins
 		self.ENERG_LO = ENERG_AX['Elo'] # Incoming photon energy, lower bound
+		self.ENERG_MID =  ENERG_AX['Emid'] # Incoming photon energy, bin center
 		self.ENERG_HI =  ENERG_AX['Ehi'] # Incoming photon energy, upper bound
-		print("Response matrix has been reset to zeros.")
+		if verbose is True:
+			print("Response matrix has been reset to zeros.")
 		self.make_empty_resp()
 
-	def set_E_chans(self,E_chan_min=0,E_chan_max=200,num_chans=80):
+	def set_E_chans(self,E_chan_min=0,E_chan_max=200,num_chans=80,verbose=True):
 		""" Class method to set the photon energy axis""" 
 		ECHAN_AX = make_en_axis(E_chan_min, E_chan_max, num_chans)
 		self.num_chans = num_chans
 		self.ECHAN_LO = ECHAN_AX['Elo'] # Instrument energy channel lower bound
+		self.ECHAN_MID = ECHAN_AX['Emid'] # Instrument energy channel center
 		self.ECHAN_HI = ECHAN_AX['Ehi'] # Instrument energy channel upper bound
-		print("Response matrix has been reset to zeros.")
+		if verbose is True:
+			print("Response matrix has been reset to zeros.")
 		self.make_empty_resp()
 
 	def make_empty_resp(self):
@@ -127,10 +124,12 @@ class ResponseMatrix(object):
 			self.ECHAN_HI[i] = ebounds_data[i][2] # Instrument energy channel upper bound
 			self.ECHAN_MID[i] = (self.ECHAN_LO[i]+self.ECHAN_HI[i])/2 # Instrument energy channel center
 
-	def plot_heatmap(self,E_phot_bounds=None,E_chan_bounds=None):
+	def plot_heatmap(self,ax=None,E_phot_bounds=None,E_chan_bounds=None):
 		""" Plot heat map of the response matrix """
-		fig = plt.figure()
-		ax = fig.gca()
+
+		if ax is None:
+			ax = plt.figure().gca()
+		fig = plt.gcf()
 
 		im = ax.pcolormesh(self.ECHAN_MID,self.ENERG_MID,self.MATRIX,shading='auto')
 
@@ -149,10 +148,11 @@ class ResponseMatrix(object):
 		cbar = fig.colorbar(im)
 		cbar.ax.set_ylabel('Probability', rotation=270,labelpad=15)
 
-	def plot_effarea(self,det_area=1,E_phot_bounds=None):
+	def plot_effarea(self,ax=None,det_area=1,E_phot_bounds=None):
 		""" Plot heat map of the response matrix """
-		fig = plt.figure()
-		ax = fig.gca()
+		
+		if ax is None:
+			ax = plt.figure().gca()
 
 		# eff_area = np.sum(self.MATRIX,axis=1)/(self.ENERG_HI-self.ENERG_LO)
 		eff_area = np.zeros(shape=len(self.MATRIX))
