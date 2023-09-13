@@ -23,3 +23,5 @@ def bayesian_blocks(grb,dur_per=90):
 
 	# Extract the duration
 	# perhaps the bin_edges from above can be used to find the boxes that exceed some rate threshold?
+
+	# return duration, fluence
