@@ -34,7 +34,7 @@ class GRB(object):
 
 		# Set light curve of GRB
 		if light_curve_fn is not None:
-			self.light_curve = fits.getdata(light_curve_fn,ext=1)
+			self.load_light_curve(light_curve_fn)
 
 	def info_extractor(self,info_fn: str):
 		"""
@@ -140,10 +140,27 @@ class GRB(object):
 			self.spectrum = spec_array
 			return 0;
 
-	def load_light_curve(self,file_name,inc_unc = False):
+	def load_light_curve(self,file_name,inc_unc = True,t_offset=0):
 		
-		if inc_unc is False:
-			self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float)])
-		else:
-			self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float),('UNC',float)])
+		# Check if this is a fits file or a text file 
 
+		if file_name.endswith(".lc") or file_name.endswith(".fits"):
+			if inc_unc is False:
+				tmp_light_curve = fits.getdata(file_name,ext=1)
+				self.light_curve = np.zeros(shape=len(tmp_light_curve),dtype=[('TIME',float),('RATE',float)])
+				self.light_curve['TIME'] = tmp_light_curve['TIME']
+				self.light_curve['RATE'] = tmp_light_curve['RATE']
+			else:
+				tmp_light_curve = fits.getdata(file_name,ext=1)
+				self.light_curve = np.zeros(shape=len(tmp_light_curve),dtype=[('TIME',float),('RATE',float),('UNC',float)])
+				self.light_curve['TIME'] = tmp_light_curve['TIME']
+				self.light_curve['RATE'] = tmp_light_curve['RATE']
+				self.light_curve['UNC'] = tmp_light_curve['ERROR']
+		elif file_name.endswith(".txt"):
+			if inc_unc is False:
+				self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float)])
+			else:
+				self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float),('UNC',float)])
+
+		if t_offset != 0:
+			self.light_curve -= t_offset
