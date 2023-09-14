@@ -7,11 +7,11 @@ Defines the Bayesian block method to calculate the duration of a GRB from a supp
 """
 
 import numpy as np
-import astropy
+from astropy.stats import bayesian_blocks
 
-def bayesian_blocks(grb,dur_per=90):
+def bayesian_t_blocks(grb,dur_per=90,ncp_prior=20):
 	"""
-	Method to extract the duration of a GRB from a supplied light curve using a Bayesian block method. 
+	Method to extract the duration and photon fluence of a GRB from a supplied light curve using a Bayesian block method. 
 
 	Attributes:
 	grb = 		(GRB) 		A grb object 
@@ -19,9 +19,25 @@ def bayesian_blocks(grb,dur_per=90):
 	"""
 
 	# Bin the light curve 
-	bin_edges = astropy.stats.bayesian_block(t=synth_GRB.light_curve['TIME'],x=synth_GRB.light_curve['RATE'],sigma=synth_GRB.light_curve['UNC'],fitness="measures") # Find the T90 and the fluence 
+	bin_edges = bayesian_blocks(t=grb.light_curve['TIME'],x=grb.light_curve['RATE'],sigma=grb.light_curve['UNC'],fitness="measures",ncp_prior=ncp_prior) # Find the T90 and the fluence 
 
-	# Extract the duration
-	# perhaps the bin_edges from above can be used to find the boxes that exceed some rate threshold?
+	# Calculate total duration and start time 
+	t_dur_tot = bin_edges[-2] - bin_edges[1]
+	t_start_tot = bin_edges[1]
 
-	# return duration, fluence
+	## Find TXX
+	emission_interval = grb.light_curve[np.argmax(t_start_tot<=grb.light_curve['TIME']):np.argmax((t_start_tot+t_dur_tot)<=grb.light_curve['TIME'])]
+	# Find the total fluence 
+	tot_fluence = np.sum(emission_interval['RATE'])
+	# Find the normalized cumulative sum between the total duration 
+	cum_sum_fluence = np.cumsum(emission_interval['RATE'])/tot_fluence
+	# Find the time interval that encompasses dur_per of the burst fluence
+	per_start = (100 - dur_per)/2
+	per_end = 100 - per_start
+	t_start =  emission_interval['TIME'][np.argmax(per_start <= cum_sum_fluence)]
+	t_end = emission_interval['TIME'][np.argmax(per_end <= cum_sum_fluence)]
+
+	duration = t_end - t_start
+	phot_fluence = np.sum(grb.light_curve[np.argmax(t_start<=grb.light_curve['TIME']):np.argmax(t_end<=grb.light_curve['TIME'])])
+
+	return duration, phot_fluence
