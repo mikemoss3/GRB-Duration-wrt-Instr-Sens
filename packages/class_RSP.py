@@ -124,6 +124,18 @@ class ResponseMatrix(object):
 			self.ECHAN_HI[i] = ebounds_data[i][2] # Instrument energy channel upper bound
 			self.ECHAN_MID[i] = (self.ECHAN_LO[i]+self.ECHAN_HI[i])/2 # Instrument energy channel center
 
+	def load_SwiftBAT_resp(self,imx,imy):
+		"""
+		Method to load an (averaged) Swift/BAT response matrix given the position of the source on the detector plane.
+		"""
+
+		# Obtain GridID
+		gridid = _find_grid_id(imx,imy)
+
+		# Load corresponding response matrix
+		self.load_rsp_from_file(file_name = "BAT_alldet_grid_{}.rsp".format(gridid))
+
+
 	def plot_heatmap(self,ax=None,E_phot_bounds=None,E_chan_bounds=None):
 		""" Plot heat map of the response matrix """
 
@@ -211,3 +223,19 @@ def make_folded_spec(pre_folded_spec,rsp):
 	folded_spec['UNC'] = 0.05*folded_spec['RATE']
 
 	return folded_spec
+
+def _find_grid_id(imx,imy):
+	"""
+	Method to find the Swift/BAT response matrix GridID based on the position of the source on the detector plane according to Lien et al 2012.
+	"""
+
+	# Load table of GridIDs and imx,imy positions
+	gridnum_imx_imy = np.genfromtxt("./data-files/SwiftBAT-resp-mats/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imy",float),("theta",float)])
+	# Based on imx and imy, determine which grid number to use
+	imx_list_cut1 = np.argwhere(gridnum_imx_imy['imx']<=imx+0.25).T[0]
+	imx_list_cut2 = np.argwhere(gridnum_imx_imy['imx'][imx_list_cut1]>=imx-0.25).T[0]
+	imy_list_cut1 = np.argwhere(gridnum_imx_imy['imy'][imx_list_cut1][imx_list_cut2] <= imy+0.17).T[0]
+	imy_list_cut2 = np.argwhere(gridnum_imx_imy['imy'][imx_list_cut1][imx_list_cut2][imy_list_cut1] >= imy-0.17).T[0]
+	gridid = gridnum_imx_imy['GRIDID'][imx_list_cut1][imx_list_cut2][imy_list_cut1][imy_list_cut2][0]
+
+	return gridid
