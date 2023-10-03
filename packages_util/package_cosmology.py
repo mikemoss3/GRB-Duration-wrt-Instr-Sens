@@ -9,7 +9,7 @@ This file defines functions that deal with cosmological corrections.
 
 import numpy as np
 import scipy.integrate as integrate 
-import simscripts.globalconstants as gc
+import packages_util.globalconstants as gc
 
 
 def lum_dis(z: float):

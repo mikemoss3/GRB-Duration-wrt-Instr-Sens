@@ -133,7 +133,7 @@ class ResponseMatrix(object):
 		gridid = _find_grid_id(imx,imy)
 
 		# Load corresponding response matrix
-		self.load_rsp_from_file(file_name = "BAT_alldet_grid_{}.rsp".format(gridid))
+		self.load_rsp_from_file(file_name = "./data-files/swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(gridid))
 
 
 	def plot_heatmap(self,ax=None,E_phot_bounds=None,E_chan_bounds=None):
@@ -230,7 +230,7 @@ def _find_grid_id(imx,imy):
 	"""
 
 	# Load table of GridIDs and imx,imy positions
-	gridnum_imx_imy = np.genfromtxt("./data-files/SwiftBAT-resp-mats/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imy",float),("theta",float)])
+	gridnum_imx_imy = np.genfromtxt("./data-files/swiftBAT-resp-mats/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imy",float),("theta",float)])
 	# Based on imx and imy, determine which grid number to use
 	imx_list_cut1 = np.argwhere(gridnum_imx_imy['imx']<=imx+0.25).T[0]
 	imx_list_cut2 = np.argwhere(gridnum_imx_imy['imx'][imx_list_cut1]>=imx-0.25).T[0]

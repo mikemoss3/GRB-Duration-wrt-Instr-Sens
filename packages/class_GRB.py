@@ -140,6 +140,20 @@ class GRB(object):
 			self.spectrum = spec_array
 			return 0;
 
+	def make_spectrum(self,emin,emax,bins,model,params,spec_num=None):
+		"""
+		Method to make the GRB spectrum using a supplied spectral model and its parameters
+		"""
+
+		# Initialize array
+		if spec_num == None:
+			self.spectrum = np.zeros(shape=bins,dtype=[("ENERGY",float),("RATE",float)])
+		# If spec_num is not None:
+
+		self.spectrum['ENERGY'] = np.logspace(np.log10(emin),np.logspace(emax),num=bins)
+		self.spectrum['RATE'] = model(*params)
+
+
 	def load_light_curve(self,file_name,inc_unc = True,t_offset=0):
 		
 		# Check if this is a fits file or a text file 

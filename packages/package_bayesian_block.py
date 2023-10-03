@@ -32,12 +32,12 @@ def bayesian_t_blocks(grb,dur_per=90,ncp_prior=20):
 	# Find the normalized cumulative sum between the total duration 
 	cum_sum_fluence = np.cumsum(emission_interval['RATE'])/tot_fluence
 	# Find the time interval that encompasses dur_per of the burst fluence
-	per_start = (100 - dur_per)/2
-	per_end = 100 - per_start
+	per_start = ((100 - dur_per)/2)/100
+	per_end = 1 - per_start
 	t_start =  emission_interval['TIME'][np.argmax(per_start <= cum_sum_fluence)]
 	t_end = emission_interval['TIME'][np.argmax(per_end <= cum_sum_fluence)]
 
 	duration = t_end - t_start
-	phot_fluence = np.sum(grb.light_curve[np.argmax(t_start<=grb.light_curve['TIME']):np.argmax(t_end<=grb.light_curve['TIME'])])
+	phot_fluence = np.sum(grb.light_curve['RATE'][np.argmax(t_start<=grb.light_curve['TIME']):np.argmax(t_end<=grb.light_curve['TIME'])])
 
-	return duration, phot_fluence
+	return duration, t_start,t_end, phot_fluence
