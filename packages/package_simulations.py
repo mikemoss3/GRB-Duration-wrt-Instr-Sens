@@ -10,6 +10,7 @@ import numpy as np
 import multiprocessing as mp
 from packages.class_GRB import GRB
 from packages_util.package_cosmology import lum_dis
+from packages_util.package_det_ang_dependence import find_pcode, find_inc_ang
 
 
 def simulate_observation(template_grb, z, imx, imy, ndets, resp_mat, sim_triggers=False,ndet_max=32768,bgd_rate_per_det=0.3):
@@ -29,7 +30,7 @@ def simulate_observation(template_grb, z, imx, imy, ndets, resp_mat, sim_trigger
 
 	# Initialize synth_GRB
 	synth_GRB = GRB(grbname=template_grb.grbname,z=z,imx=imx,imy=imy)
-	synth_GRB.light_curve = template_grb.light_curve
+	synth_GRB.light_curve = np.copy(template_grb.light_curve)
 
 	# Apply distance corrections to template GRB light curve to create synthetic GRB light cure
 	# synth_GRB.light_curve['RATE'] = template_grb.light_curve['RATE'] / 4. / np.pi / lum_dis(z)**2.
@@ -37,28 +38,27 @@ def simulate_observation(template_grb, z, imx, imy, ndets, resp_mat, sim_trigger
 
 	# Apply observing condition corrections (e.g., NDETS)
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
-	synth_GRB.light_curve['RATE'] *= det_frac
-	synth_GRB.light_curve['UNC'] *= det_frac
 
 	# Fold GRB through instrument response (RSP selected based on position on the detector plane)
 	folded_spec = resp_mat.fold_spec(template_grb.spectrum)
-	rate_15_350keV = band_rate(folded_spec,15,350)
-	dt = synth_GRB.light_curve['TIME'][1] - synth_GRB.light_curve['TIME'][0]
-	synth_GRB.light_curve['RATE'] = synth_GRB.light_curve['RATE']*rate_15_350keV * dt
+	rate_15_350keV = band_rate(folded_spec,15,350) * det_frac
+	synth_GRB.light_curve['RATE'] = synth_GRB.light_curve['RATE']*rate_15_350keV
+	synth_GRB.light_curve['UNC'] = synth_GRB.light_curve['UNC']*rate_15_350keV
 
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
 		# Calculate the fraction of the quadrant exposure 
 
 	# Add background to light curve 
-	bgd_rate = bgd_rate_per_det * ndets
+	bgd_rate = bgd_rate_per_det * ndets 
 	synth_GRB.light_curve['RATE'] += bgd_rate
 
 	# Apply fluctuations 
-	synth_GRB.light_curve['RATE'] = np.random.normal(loc=synth_GRB.light_curve['RATE'],scale=synth_GRB.light_curve['UNC'])
+	# synth_GRB.light_curve['RATE'] = np.random.normal(loc=synth_GRB.light_curve['RATE'],scale=synth_GRB.light_curve['UNC'])
+	synth_GRB.light_curve['RATE'] = np.random.normal(loc=synth_GRB.light_curve['RATE'],scale=np.sqrt(synth_GRB.light_curve['RATE']))
 
 	# Apply mask-weighting to light curve (both the rate and uncertainty)
-	apply_mask_weighting(synth_GRB.light_curve,imx,imy,ndets,bgd_rate)
+	synth_GRB.light_curve = apply_mask_weighting(synth_GRB.light_curve,imx,imy,ndets,bgd_rate)
 
 	return synth_GRB
 
@@ -82,21 +82,22 @@ def apply_mask_weighting(light_curve,imx,imy,ndets,bgd_rate):
 	"""
 
 	# From imx and imy, find pcode and the angle of incidence
-	pcode = 1 
-	angle_inc = 0 # rad
+	pcode = find_pcode(imx,imy)
+	angle_inc = find_inc_ang(imx,imy) # rad
 
 	# Total mask-weighting correction
 	correction = np.cos(angle_inc*np.pi/180)*pcode*ndets*fraction_correction(pcode) # total correction factor
 
 	# Rough calculation of the background standard deviation 
 	# stdev_backgroud = np.std(light_curve["RATE"][0:20])
-	stdev_backgroud = np.sqrt(bgd_rate)
+	stdev_backgroud = np.sqrt(np.mean(light_curve['RATE'][0:20]))
 
 	# Calculate the mask-weighted RATE column
 	light_curve['RATE'] = (light_curve["RATE"] - bgd_rate)/correction
 	# Use error propagation to calculate the uncertainty in the RATE for the mask-weight light curve
-	# light_curve['UNC'] = np.sqrt(np.power(np.sqrt(light_curve["RATE"])/correction,2)+np.power(stdev_backgroud/correction,2))
-	light_curve['UNC'] = np.sqrt( (light_curve["RATE"]/correction**2)+np.power(stdev_backgroud/correction,2))
+	light_curve['UNC'] = np.sqrt( np.power(light_curve['UNC']/correction,2.)+np.power(stdev_backgroud/correction,2.))
+
+	return light_curve
 
 def fraction_correction(pcode):
 	"""
