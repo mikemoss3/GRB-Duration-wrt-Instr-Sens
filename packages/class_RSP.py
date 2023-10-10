@@ -214,13 +214,43 @@ def make_en_axis(Emin,Emax,num_en_bins):
 	en_axis['Emid'] = (en_axis['Ehi'] + en_axis['Elo'])/2
 	return en_axis
 
-def make_folded_spec(pre_folded_spec,rsp):
-	""" Convolve spectrum with instrument response to obtain observed spectrum"""
-	folded_spec = np.zeros(shape=rsp.num_chans,dtype=[("ENERGY",float),("RATE",float),("UNC",float)])
+def make_folded_spec(source_spec,rsp):
+	""" 
+	Convolve spectrum with instrument response to obtain observed spectrum
 
+	Attributes:
+	source_spec 	= 	unfolded source spectrum
+	rsp 			=	response matrix 
+	"""
+
+	# Initialize folded spectrum 
+	folded_spec = np.zeros(shape=rsp.num_chans,dtype=[("ENERGY",float),("RATE",float),("UNC",float)])
+	# The folded spectrum will have the same energy bins as the response matrix
 	folded_spec['ENERGY'] = rsp.ECHAN_MID
-	# folded_spec['RATE'] = np.matmul(rsp.MATRIX,pre_folded_spec['RATE'])
-	folded_spec['RATE'] = np.matmul(pre_folded_spec['RATE'],rsp.MATRIX)
+
+	# Check if part of the source spectrum overlaps with the response matrix energy band
+	check_min = (source_spec['ENERGY'][0] > rsp.ENERG_HI[-1])
+	check_max = (source_spec['ENERGY'][-1] < rsp.ENERG_LO[0])
+	if check_min or check_max :
+		print("Error: The source spectrum does not overlap with the response matrix energy band.")
+		return 1;
+
+	# Initialize the binned source spectrum
+	# If the source spectrum covers a smaller interval than the response matrix, any energy bin outside of the source spectrum energy range will have a rate equal to zero.
+	binned_source_spec = np.zeros(shape=len(rsp.ENERG_MID),dtype=[("ENERGY",float),("RATE",float)])
+	binned_source_spec['ENERGY'] = rsp.ENERG_MID
+
+	# Rebin the source spectrum rate into these new bins
+	for i in range(len(binned_source_spec)-1):
+		# Find the source spectrum bins that fall within this new bin
+		inds = np.where( (source_spec['ENERGY'] > binned_source_spec['ENERGY'][i]) & (source_spec['ENERGY'] < binned_source_spec['ENERGY'][i+1]) )
+		if len(inds[0]) > 0:
+			binned_source_spec['RATE'][i] = np.sum( source_spec['RATE'][inds] ) / len(inds[0])
+
+	# Fold the correctly binned source spectrum with the response matrix
+	folded_spec['RATE'] = np.matmul(binned_source_spec['RATE'],rsp.MATRIX)
+
+	## What should the uncertainty be?
 	# folded_spec['UNC'] = np.sqrt(folded_spec['RATE'])
 	folded_spec['UNC'] = 0.05*folded_spec['RATE']
 
