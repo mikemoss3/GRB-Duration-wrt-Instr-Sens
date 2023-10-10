@@ -9,7 +9,7 @@ Defines the main class this code uses to store GRB observed and simulated data
 import numpy as np
 from astropy.io import fits
 
-from packages.class_SPECTRUM import SPECTRUM
+from packages.class_SPECFUNC import SPECFUNC
 
 class GRB(object):
 	"""
@@ -29,7 +29,7 @@ class GRB(object):
 		self.grbname = grbname
 		self.z = z
 		self.imx, self.imy = imx, imy
-		self.T100_dur, self.T100_start = T100_dur,T100_start
+		self.T100_dur, self.T100_start = T100_dur, T100_start
 
 		self.light_curve = None # Currently loaded light curve
 		self.spectrum = SPECTRUM(model=None,params=None) # Currently loaded spectrum 
@@ -188,7 +188,7 @@ class GRB(object):
 		if t_offset != 0:
 			self.light_curve -= t_offset
 
-	def move_to_source_frame(self,z):
+	def move_to_source_frame(self,z, rm_bgd_sig=True):
 		"""
 		Method to place the GRB light curve and spectra into the source rest frame using the given redshift
 
@@ -202,12 +202,14 @@ class GRB(object):
 		if (self.spectrum._check_model()==1) or (self.spectrum._check_params()==1):
 			return;
 
-		# Remove background
-
+		# Remove background signal outside of T100 (requires that the T100 start time and duration were defined)
+		if rm_bgd_sig is True:
+			inds = np.where( (self.light_curve['TIME'] < self.T100_start) & (self.light_curve['TIME'] > (self.T100_start+self.T100_dur)) )
 
 		## 
 		# Shift Spectrum
 		## 
+		
 
 
 		##

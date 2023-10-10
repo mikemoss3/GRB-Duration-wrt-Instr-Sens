@@ -5,31 +5,26 @@ Contact: mikejmoss3@gmail.com
 Test running sandbox 
 
 """
+import numpy as np
 
 # from unit_tests.test_bayesian_blocks import run_test
 # run_test()
 
-import numpy as np
-import astropy
-from astropy.modeling import Fittable1DModel, CompoundModel, Parameter
+#
+# from packages.class_SPECFUNC import PL, SPECFUNC
 
-bins = 204 
-emin = 15
-emax = 350
 
-alpha = 1.0
-norm = 2.06201**(-2)
+# x = np.linspace(0.1,10,10)
+# params = [-0.5,1]
 
-from packages.class_SPECTRUM import SPECTRUM
-from packages.class_SPECTRUM import PL, CPL, Band
+# test = PL(params)
+# test.testmeth()
+# print(test(10))
 
-test_spec = SPECTRUM(model=PL,params=[-alpha,2000*norm])
 
-test_spec_arr = test_spec.make_spectrum(emin=emin,emax=emax,num_bins=bins)
+def test(**kwargs):
+	for i, (key,val) in enumerate(kwargs.items()):
+		print("{} = {}".format(key, val))
 
-import matplotlib.pyplot as plt
-plt.plot(test_spec_arr['ENERGY'],test_spec_arr['RATE'])
-
-plt.xscale('log')
-plt.yscale('log')
-plt.show()
+test(how=1,about=2,this=3)
+test(**{"and" : 5, "or" : 2})
