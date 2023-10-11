@@ -5,26 +5,35 @@ Contact: mikejmoss3@gmail.com
 Test running sandbox 
 
 """
-import numpy as np
 
 # from unit_tests.test_bayesian_blocks import run_test
 # run_test()
 
-#
-# from packages.class_SPECFUNC import PL, SPECFUNC
+import numpy as np
+import matplotlib.pyplot as plt
+
+from packages.class_GRB import GRB
+from packages.class_SPECFUNC import PL
+
+bins = 204 
+emin = 15
+emax = 350
+
+alpha = -1.0
+norm = 2.06201**(-2)
+
+# Make a GRB object
+template_grb = GRB()
+# Make light curve 
+template_grb.load_light_curve("data-files/sw00330856000b_1chan_64ms.lc", rm_trigtime=True)
+template_grb.light_curve = template_grb.light_curve[np.argmax(-100 <= template_grb.light_curve['TIME']):np.argmax(template_grb.light_curve['TIME'] >= 100)]
+
+template_grb.load_spectrum(PL(alpha=alpha,norm=norm))
 
 
-# x = np.linspace(0.1,10,10)
-# params = [-0.5,1]
-
-# test = PL(params)
-# test.testmeth()
-# print(test(10))
+plt.plot(template_grb.light_curve['TIME'],template_grb.light_curve['RATE'])
+template_grb.move_to_new_frame(0.5, 0.2,rm_bgd_sig=False)
+plt.plot(template_grb.light_curve['TIME'],template_grb.light_curve['RATE'])
 
 
-def test(**kwargs):
-	for i, (key,val) in enumerate(kwargs.items()):
-		print("{} = {}".format(key, val))
-
-test(how=1,about=2,this=3)
-test(**{"and" : 5, "or" : 2})
+plt.show()
