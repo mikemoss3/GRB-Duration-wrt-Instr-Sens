@@ -10,7 +10,7 @@ from astropy.io import fits
 import matplotlib.pyplot as plt
 from scipy.stats import norm
 
-from packages_util.package_det_ang_dependence import find_grid_id
+from util_packages.package_det_ang_dependence import find_grid_id
 
 class ResponseMatrix(object):
 	"""
@@ -135,7 +135,7 @@ class ResponseMatrix(object):
 		gridid = find_grid_id(imx,imy)
 
 		# Load corresponding response matrix
-		self.load_rsp_from_file(file_name = "./packages_util/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(gridid))
+		self.load_rsp_from_file(file_name = "./util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(gridid))
 
 
 	def plot_heatmap(self,ax=None,E_phot_bounds=None,E_chan_bounds=None):
