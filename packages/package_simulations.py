@@ -9,8 +9,7 @@ Defines all the functions necessary to simulate an observation of a GRB using an
 import numpy as np
 import multiprocessing as mp
 from packages.class_GRB import GRB
-from packages_util.package_cosmology import lum_dis
-from packages_util.package_det_ang_dependence import find_pcode, find_inc_ang
+from util_packages.package_det_ang_dependence import find_pcode, find_inc_ang
 
 
 def simulate_observation(template_grb, z, imx, imy, ndets, resp_mat, sim_triggers=False,ndet_max=32768,bgd_rate_per_det=0.3):
@@ -33,8 +32,6 @@ def simulate_observation(template_grb, z, imx, imy, ndets, resp_mat, sim_trigger
 	synth_GRB.light_curve = np.copy(template_grb.light_curve)
 
 	# Apply distance corrections to template GRB light curve to create synthetic GRB light cure
-	# synth_GRB.light_curve['RATE'] = template_grb.light_curve['RATE'] / 4. / np.pi / lum_dis(z)**2.
-	# synth_GRB.light_curve['UNC'] = template_grb.light_curve['UNC'] / 4. / np.pi / lum_dis(z)**2.
 
 	# Apply observing condition corrections (e.g., NDETS)
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
