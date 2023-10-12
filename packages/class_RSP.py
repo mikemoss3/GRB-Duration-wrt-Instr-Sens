@@ -12,6 +12,7 @@ from scipy.stats import norm
 
 from util_packages.package_det_ang_dependence import find_grid_id
 
+
 class ResponseMatrix(object):
 	"""
 	Response matrix class
@@ -189,12 +190,12 @@ class ResponseMatrix(object):
 		ax.set_xlabel('Incident Photon Energy (keV)')
 		ax.set_ylabel(r'Effective Area (cm$^2$)')
 
-	def fold_spec(self,spectrum):
+	def fold_spec(self,specfunc):
 		"""
 		Method to fold a spectrum through this response matrix
 		"""
 
-		folded_spec = make_folded_spec(spectrum,self)
+		folded_spec = make_folded_spec(specfunc,self)
 
 		return folded_spec
 
@@ -214,13 +215,16 @@ def make_en_axis(Emin,Emax,num_en_bins):
 	en_axis['Emid'] = (en_axis['Ehi'] + en_axis['Elo'])/2
 	return en_axis
 
-def make_folded_spec(source_spec,rsp):
+def make_folded_spec(source_spec_func,rsp):
 	""" 
-	Convolve spectrum with instrument response to obtain observed spectrum
+	Convolve spectral function with instrument response to obtain observed spectrum
 
 	Attributes:
-	source_spec 	= 	unfolded source spectrum
-	rsp 			=	response matrix 
+	----------
+	source_spec_func : SPECFUNC
+		Unfolded source spectral function
+	rsp : RSP
+		Response matrix 
 	"""
 
 	# Initialize folded spectrum 
@@ -228,29 +232,24 @@ def make_folded_spec(source_spec,rsp):
 	# The folded spectrum will have the same energy bins as the response matrix
 	folded_spec['ENERGY'] = rsp.ECHAN_MID
 
-	# Check if part of the source spectrum overlaps with the response matrix energy band
-	check_min = (source_spec['ENERGY'][0] > rsp.ENERG_HI[-1])
-	check_max = (source_spec['ENERGY'][-1] < rsp.ENERG_LO[0])
-	if check_min or check_max :
-		print("Error: The source spectrum does not overlap with the response matrix energy band.")
-		return 1;
-
 	# Initialize the binned source spectrum
 	# If the source spectrum covers a smaller interval than the response matrix, any energy bin outside of the source spectrum energy range will have a rate equal to zero.
-	binned_source_spec = np.zeros(shape=len(rsp.ENERG_MID),dtype=[("ENERGY",float),("RATE",float)])
+	binned_source_spec = np.zeros(shape=rsp.num_phot_bins,dtype=[("ENERGY",float),("RATE",float)])
+
 	binned_source_spec['ENERGY'] = rsp.ENERG_MID
+	binned_source_spec['RATE'] = source_spec_func(binned_source_spec['ENERGY'])
 
 	# Rebin the source spectrum rate into these new bins
-	for i in range(len(binned_source_spec)-1):
-		# Find the source spectrum bins that fall within this new bin
-		inds = np.where( (source_spec['ENERGY'] > binned_source_spec['ENERGY'][i]) & (source_spec['ENERGY'] < binned_source_spec['ENERGY'][i+1]) )
-		if len(inds[0]) > 0:
-			binned_source_spec['RATE'][i] = np.sum( source_spec['RATE'][inds] ) / len(inds[0])
+	# for i in range(len(binned_source_spec)-1):
+	# 	# Find the source spectrum bins that fall within this new bin
+	# 	inds = np.where( (source_spec['ENERGY'] > binned_source_spec['ENERGY'][i]) & (source_spec['ENERGY'] < binned_source_spec['ENERGY'][i+1]) )
+	# 	if len(inds[0]) > 0:
+	# 		binned_source_spec['RATE'][i] = np.sum( source_spec['RATE'][inds] ) / len(inds[0])
 
 	# Fold the correctly binned source spectrum with the response matrix
 	folded_spec['RATE'] = np.matmul(binned_source_spec['RATE'],rsp.MATRIX)
 
-	## What should the uncertainty be?
+	# What should the uncertainty be?
 	# folded_spec['UNC'] = np.sqrt(folded_spec['RATE'])
 	folded_spec['UNC'] = 0.05*folded_spec['RATE']
 

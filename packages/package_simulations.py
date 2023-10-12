@@ -11,35 +11,43 @@ from packages.class_GRB import GRB
 from util_packages.package_det_ang_dependence import find_pcode, find_inc_ang
 
 
-def simulate_observation(template_grb, imx, imy, ndets, resp_mat, z=None, sim_triggers=False,ndet_max=32768,bgd_rate_per_det=0.3):
+def simulate_observation(template_grb, imx, imy, ndets, resp_mat, z_p=0, sim_triggers=False,ndet_max=32768,bgd_rate_per_det=0.3):
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
 
 	Attributes:
-	template_grb = 		(GRB) GRB class object that holds the source frame information of the template GRB
-	z =					(float) Redshift of synthetic GRB
-	imx, imy = 			(float) The x and y position of the GRB on the detector plane
-	ndets = 			(int) Number of detectors enabled during the synthetic observation 
-	bdg = 				(float) Background level to be added to the synthetic light curve
-	trials = 			(int) Number of trials to re-simulate this burst
-	multiproc = 		(boolen) Multiprocessing on or off?
-	sim_triggers = 		(boolean) Simulate triggers or not?
+	template_grb : GRB 
+		GRB class object that holds the source frame information of the template GRB
+	imx, imy : 			float, float 
+		The x and y position of the GRB on the detector plane
+	resp_mat : RSP
+		Response matrix to convolve the template spectrum with
+	ndets : int
+		Number of detectors enabled during the synthetic observation 
+	z : float 
+		Redshift of synthetic GRB
+	sim_triggers : bool
+		Whether or not to simulate the Swift/BAT trigger algorithms or not
+	ndet_max : int
+		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
+	bdg_rate_per_det : float 
+		Background level to be added to the synthetic light curve
 	"""
 
 	# Initialize synth_GRB
-	synth_GRB = GRB(grbname=template_grb.grbname,z=z,imx=imx,imy=imy)
-	synth_GRB.light_curve = np.copy(template_grb.light_curve)
+	synth_GRB = template_grb.copy()
+	synth_GRB.imx, synth_GRB.imy = imx, imy
+	synth_GRB.z = z_p
 
 	# Apply distance corrections to template GRB light curve to create synthetic GRB light cure.
 	# This assumes that the template light curve is in the source frame
-	if z is not None:
-		synth_GRB.move_to_new_frame(z_o=0, z_p=z)
+	synth_GRB.move_to_new_frame(z_o=template_grb.z, z_p=z_p)
 
 	# Apply observing condition corrections (e.g., NDETS)
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
 	# Fold GRB through instrument response (RSP selected based on position on the detector plane)
-	folded_spec = resp_mat.fold_spec(template_grb.spectrum)
+	folded_spec = resp_mat.fold_spec(template_grb.specfunc)
 	rate_15_350keV = band_rate(folded_spec,15,350) * det_frac
 	synth_GRB.light_curve['RATE'] = synth_GRB.light_curve['RATE']*rate_15_350keV
 	synth_GRB.light_curve['UNC'] = synth_GRB.light_curve['UNC']*rate_15_350keV

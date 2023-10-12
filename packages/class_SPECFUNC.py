@@ -2,6 +2,7 @@ import numpy as np
 from scipy.integrate import romberg
 import copy 
 
+
 class SPECFUNC():
 	"""
 	Base class to hold variables associated with the loaded spectral model and its parameters
@@ -13,7 +14,7 @@ class SPECFUNC():
 	params : list
 		List of model parameters
 	"""
-	def __init__(self,**kwargs):
+	def __init__(self, **kwargs):
 		
 		self.color = "k"  # Define a color, used for plotting
 
@@ -24,7 +25,7 @@ class SPECFUNC():
 		self.param_names = list(self.params.keys())
 		self.param_vals = list(self.params.values())
 
-	def __call__(self,energy):
+	def __call__(self, energy):
 		"""
 		Method to evaluate the spectral function at a given energy.
 		"""
@@ -148,10 +149,13 @@ class PL(SPECFUNC):
 
 	def __init__(self, **kwargs):
 		self.name = "Power Law"
-		alpha = -1.
-		norm = 1.
-		enorm = 1.
-		self.params = {"alpha" : alpha ,"norm" : norm ,"enorm" : enorm}
+		
+		# Default values
+		def_alpha = -1.
+		def_norm = 1.
+		def_enorm = 1.
+		
+		self.params = {"alpha" : def_alpha ,"norm" : def_norm ,"enorm" : def_enorm}
 		
 		super().__init__(**kwargs)
 
@@ -164,7 +168,7 @@ class PL(SPECFUNC):
 		
 		return flux_value
 
-def CPL(SPECFUNC):
+class CPL(SPECFUNC):
 	"""
 	Cut-off Power Law 
 
@@ -183,14 +187,15 @@ def CPL(SPECFUNC):
 	def __init__(self,**kwargs):
 		self.name = "Cut-off Power Law"
 
-		ep = 100.
-		alpha = -1.
-		norm = 1.
-		enorm = 1.
+		# Default values
+		def_ep = 100.
+		def_alpha = -1.
+		def_norm = 1.
+		def_enorm = 1.
 
-		self.params = {"ep" : ep,"alpha" : alpha,"norm" : norm,"enorm" : enorm}
+		self.params = {"ep" : def_ep,"alpha" : def_alpha, "norm" : def_norm,"enorm" : def_enorm}
 
-		super().__init__()
+		super().__init__(**kwargs)
 
 	def evaluate(self,energy):
 		"""
@@ -216,13 +221,14 @@ class Blackbody(SPECFUNC):
 	def __init__(self,**kwargs):
 		self.name = "Blackbody"
 
-		temp = 20.
-		alpha = 0.4
-		norm = 1
+		# Default values
+		def_temp = 20.
+		def_alpha = 0.4
+		def_norm = 1
 
-		self.params = {"temp" : temp,"alpha" : alpha,"norm" : norm}
+		self.params = {"temp" : def_temp,"alpha" : def_alpha,"norm" : def_norm}
 
-		super().__init__()
+		super().__init__(**kwargs)
 
 	def evaluate(self,energy):
 		"""
@@ -242,7 +248,7 @@ class Blackbody(SPECFUNC):
 
 		return flux_value
 
-def Band(SPECFUNC):
+class Band(SPECFUNC):
 	"""
 	Band function (see Band et al. 1993)
 
@@ -260,15 +266,16 @@ def Band(SPECFUNC):
 	def __init__(self,**kwargs):
 		self.name = "Band"
 
-		ep = 400.
-		alpha = -1.
-		beta = -2.
-		norm = 1.
-		enorm = 100.
+		# Default values
+		def_ep = 400.
+		def_alpha = -1.
+		def_beta = -2.
+		def_norm = 1.
+		def_enorm = 100.
 
-		self.params = {"ep" : ep, "alpha" : alpha, "beta" : beta, "norm" : norm, "enorm" : enorm}
+		self.params = {"ep" : def_ep, "alpha" : def_alpha, "beta" : def_beta, "norm" : def_norm, "enorm" : def_enorm}
 
-		super().__init__()
+		super().__init__(**kwargs)
 
 	def evaluate(self,energy):
 		"""
@@ -286,8 +293,6 @@ def Band(SPECFUNC):
 		
 		i = energy > self.params['ep']
 		if i.max():
-				flux_value[i] = self.params['norm'] * np.power((self.params['alpha'] - self.params['beta']) * e0/self.params['enorm'], self.params['alpha'] - self.params['beta']) * np.exp(self.params['beta'] - self.params['alpha']) * np.power(energy[i]/self.params['enorm'],self.params['beta'])
+			flux_value[i] = self.params['norm'] * np.power((self.params['alpha'] - self.params['beta']) * e0/self.params['enorm'], self.params['alpha'] - self.params['beta']) * np.exp(self.params['beta'] - self.params['alpha']) * np.power(energy[i]/self.params['enorm'],self.params['beta'])
 
 		return flux_value
-
-
