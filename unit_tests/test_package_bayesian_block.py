@@ -20,7 +20,7 @@ class TestBayesianBlock(unittest.TestCase):
 
 	def test_T90_real_grb(self):
 		# Known T90 duration
-		known_T90 = 32.51199996471405
+		known_T90 = 32.51199996471405 # sec
 
 		# Find duration using Bayesian block routine
 		duration, timestart, fluence = bayesian_t_blocks(self.real_grb,dur_per=90)
@@ -29,7 +29,7 @@ class TestBayesianBlock(unittest.TestCase):
 
 	def test_T90_start_real_grb(self):
 		# Known T90 duration
-		known_T90_start = 0.6080000400543213
+		known_T90_start = 0.6080000400543213 # sec
 
 		# Find duration using Bayesian block routine
 		duration, timestart, fluence = bayesian_t_blocks(self.real_grb,dur_per=90)
@@ -38,7 +38,7 @@ class TestBayesianBlock(unittest.TestCase):
 
 	def test_T90_fluence_real_grb(self):
 		# Known T90 duration
-		known_T90_fluence = 151.05826053713116
+		known_T90_fluence = 151.05826053713116 # erg
 
 		# Find duration using Bayesian block routine
 		duration, timestart, fluence = bayesian_t_blocks(self.real_grb,dur_per=90)
