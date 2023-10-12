@@ -2,38 +2,37 @@
 Author: Mike Moss
 Contact: mikejmoss3@gmail.com	
 
-Test running sandbox 
+Test running sandbox and unit test runner
 
 """
 
-# from unit_tests.test_bayesian_blocks import run_test
-# run_test()
+run_unit_tests = True
 
-import numpy as np
-import matplotlib.pyplot as plt
+if run_unit_tests is True:
+	import unittest
 
-from packages.class_GRB import GRB
-from packages.class_SPECFUNC import PL
+	import unit_tests.test_class_SPECFUNC as test_sf
+	import unit_tests.test_package_bayesian_block as test_bb
 
-bins = 204 
-emin = 15
-emax = 350
+	runner = unittest.TextTestRunner()
 
-alpha = -1.0
-norm = 2.06201**(-2)
+	# Run unit tests:
+	
+	# Test classes
+	runner.run(test_sf.suite())
 
-# Make a GRB object
-template_grb = GRB()
-# Make light curve 
-template_grb.load_light_curve("data-files/sw00330856000b_1chan_64ms.lc", rm_trigtime=True)
-template_grb.light_curve = template_grb.light_curve[np.argmax(-100 <= template_grb.light_curve['TIME']):np.argmax(template_grb.light_curve['TIME'] >= 100)]
+	# Test packages
+	runner.run(test_bb.suite())
 
-template_grb.load_spectrum(PL(alpha=alpha,norm=norm))
+	# Test utility packages
 
 
-plt.plot(template_grb.light_curve['TIME'],template_grb.light_curve['RATE'])
-template_grb.move_to_new_frame(0.5, 0.2,rm_bgd_sig=False)
-plt.plot(template_grb.light_curve['TIME'],template_grb.light_curve['RATE'])
 
+# from packages.package_bayesian_block import bayesian_t_blocks
+# from packages.class_GRB import GRB
 
-plt.show()
+# light_curve_fn = "./unit_tests/test_files/grb_130831A_1chan_64ms.txt"
+# real_grb = GRB(light_curve_fn=light_curve_fn)
+
+# duration, timestart, fluence = bayesian_t_blocks(real_grb,dur_per=90)
+# print(duration,timestart,fluence)
