@@ -7,7 +7,7 @@ def find_grid_id(imx,imy):
 	"""
 
 	# Load table of GridIDs and imx,imy positions
-	gridnum_imx_imy = np.genfromtxt("./packages_util/files-det-ang-dependence/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imy",float),("theta",float)])
+	gridnum_imx_imy = np.genfromtxt("./util_packages/files-det-ang-dependence/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imy",float),("theta",float)])
 	# Based on imx and imy, determine which grid number to use
 	imx_list_cut1 = np.argwhere(gridnum_imx_imy['imx']<=imx+0.25).T[0]
 	imx_list_cut2 = np.argwhere(gridnum_imx_imy['imx'][imx_list_cut1]>=imx-0.25).T[0]
@@ -31,9 +31,9 @@ def find_pcode(imx,imy):
 	"""
 
 	# Load pcode map image 
-	pcode_img = fits.getdata("./packages_util/files-det-ang-dependence/pcode-map.img",ext=0) # indexing as pcode_img[y-index, x-index]
+	pcode_img = fits.getdata("./util_packages/files-det-ang-dependence/pcode-map.img",ext=0) # indexing as pcode_img[y-index, x-index]
 	# Load header from file
-	pcode_img_header = fits.getheader("./packages_util/files-det-ang-dependence/pcode-map.img",ext=0)
+	pcode_img_header = fits.getheader("./util_packages/files-det-ang-dependence/pcode-map.img",ext=0)
 
 	# Make (imx, imy) grid based on the indices (i,j)
 	# i and j are the indices of each pixel
