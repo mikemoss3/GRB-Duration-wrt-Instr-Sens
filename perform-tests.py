@@ -6,7 +6,7 @@ Test running sandbox and unit test runner
 
 """
 
-run_unit_tests = True
+run_unit_tests = False 
 
 if run_unit_tests is True:
 	import unittest
@@ -26,13 +26,10 @@ if run_unit_tests is True:
 
 	# Test utility packages
 
+import numpy as np
 
 
-# from packages.package_bayesian_block import bayesian_t_blocks
-# from packages.class_GRB import GRB
+a1 = np.ones(shape=(5,4))
+a2 = (1,2,3,4)
 
-# light_curve_fn = "./unit_tests/test_files/grb_130831A_1chan_64ms.txt"
-# real_grb = GRB(light_curve_fn=light_curve_fn)
-
-# duration, timestart, fluence = bayesian_t_blocks(real_grb,dur_per=90)
-# print(duration,timestart,fluence)
+print(a1*a2)
