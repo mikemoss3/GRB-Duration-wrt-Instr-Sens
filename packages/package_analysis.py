@@ -46,7 +46,7 @@ def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr,
 	# Make a list of all parameter combinations	
 	param_list = np.array(np.meshgrid(z_arr, imx_arr, imy_arr,ndets_arr)).T.reshape(-1,4)
 
-	sim_results = np.zeros(shape=int(len(param_list)*trials),dtype=[("Duration",float),("TSTART",float),("FLUENCE",float)])
+	sim_results = np.zeros(shape=int(len(param_list)*trials),dtype=[("DURATION",float),("TSTART",float),("FLUENCE",float),("z",float),("imx",float),("imy",float),("ndets",float)])
 	sim_result_ind = 0
 
 	# Simulate an observation for each parameter combination
@@ -56,8 +56,10 @@ def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr,
 			# Run the simulations without multiprocessing 
 			for j in range(trials):
 
+				sim_results[["z", "imx", "imy", "ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
+
 				synth_GRB = simulate_observation(template_grb=template_grb,z_p=param_list[i][0],imx=param_list[i][1],imy=param_list[i][2],ndets=param_list[i][3],resp_mat=resp_mat,sim_triggers=sim_triggers,ndet_max=ndet_max,bgd_rate_per_det=bgd_rate_per_det)
-				sim_results[sim_result_ind] = bayesian_t_blocks(synth_GRB,dur_per=dur_per) # Find the Duration and the fluence 
+				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_GRB, dur_per=dur_per) # Find the Duration and the fluence 
 
 				# Increase simulation index
 				sim_result_ind +=1
@@ -66,11 +68,14 @@ def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr,
 			 
 			# Load in a number of pools to run the code.
 			with mp.Pool(num_cores) as pool:
-				synth_GRBs = pool.map(simulate_observation, [template_grb,param_list[i][0],param_list[i][1],param_list[i][2],param_list[i][3],resp_mat,sim_triggers,ndet_max,bgd_rate_per_det] )
+				synth_GRBs = pool.map(simulate_observation, [template_grb, param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3], resp_mat,sim_triggers, ndet_max, bgd_rate_per_det] )
 
 			# Add the new results to the list of sim results
 			for k in range(num_cores):
-				sim_results[sim_result_ind] = bayesian_t_blocks(t=synth_GRBs[k],dur_per=dur_per)
+
+				sim_results[["z","imx","imy","ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
+
+				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(t=synth_GRBs[k], dur_per=dur_per)
 				sim_result_ind += k
 						
 			# Increment the index tacking value by the number of trials just simulated
