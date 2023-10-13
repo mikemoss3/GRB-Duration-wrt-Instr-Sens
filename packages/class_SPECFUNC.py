@@ -1,3 +1,11 @@
+"""
+Author: Mike Moss
+Contact: mikejmoss3@gmail.com	
+
+Defines the all classes related to spectral functions used in this library to represent GRB spectra.
+
+"""
+
 import numpy as np
 from scipy.integrate import romberg
 import copy 

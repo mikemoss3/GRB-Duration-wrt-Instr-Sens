@@ -7,12 +7,14 @@ Defines the functions that generate the duration and fluence distributions of sy
 
 import numpy as np
 import multiprocessing as mp
+from packages.class_GRB import GRB
 from packages.package_simulations import simulate_observation
 from packages.package_bayesian_block import bayesian_t_blocks
-
+from util_packages.package_datatypes import dt_sim_res
 
 def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr, trials, dur_per = 90, 
-	multiproc=True, num_cores = 4, sim_triggers=False, ndet_max=32768, bgd_rate_per_det=0.3, out_file_name = None, ret_ave = False):
+	multiproc=True, num_cores = 4, sim_triggers=False, ndet_max=32768, bgd_rate_per_det=0.3, 
+	out_file_name = None, ret_ave = False, keep_synth_grbs=False):
 	"""
 	Method to perform multiple simulations for each combination of input parameters 
 
@@ -22,21 +24,21 @@ def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr,
 		GRB object used as a template light curve and spectrum
 	resp_mat : RSP
 		Response matrix to convolve the template spectrum with 
-	z_arr : np.ndarry
+	z_arr : np.ndarray
 		Array of redshifts to simulate the GRB at
-	imx_arr, imy_arr : np.ndarry, np.ndarry
+	imx_arr, imy_arr : np.ndarry, np.ndarray
 		Array of (imx,imy) points i.e., where the simualted sources will be located on the detector 
-	ndets_arr : np.ndarry
-		Arry of values to use for the number of enabled detectors during the observation simulations
+	ndets_arr : np.ndarray
+		Array of values to use for the number of enabled detectors during the observation simulations
 	trials : int
 		Number of trials for each parameter combination
 	dur_per : float
 		Duration percentage to find using Bayesian blocks, i.e., dur_pur = 90 returns the T_90 of the burst
-	multiproc : bool
+	multiproc : boolean
 		Whether to multiprocessing or not
 	num_cores : int
 		Number of cores to use for multiprocessing (this must be <= the number of cpu's the computer has)
-	sim_triggers : bool
+	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
 	ndet_max : int
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
@@ -49,8 +51,11 @@ def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr,
 	# Make a list of all parameter combinations	
 	param_list = np.array(np.meshgrid(z_arr, imx_arr, imy_arr,ndets_arr)).T.reshape(-1,4)
 
-	sim_results = np.zeros(shape=int(len(param_list)*trials),dtype=[("DURATION",float),("TSTART",float),("FLUENCE",float),("z",float),("imx",float),("imy",float),("ndets",float)])
+	sim_results = np.zeros(shape=int(len(param_list)*trials),dtype=dt_sim_res)
 	sim_result_ind = 0
+
+	if keep_synth_grbs is True:
+		synth_grb_arr = np.zeros(shape=len(param_list),dtype=GRB)
 
 	# Simulate an observation for each parameter combination
 	for i in range(len(param_list)):
@@ -66,20 +71,23 @@ def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr,
 
 				# Increase simulation index
 				sim_result_ind +=1
+			synth_grb_arr[i] = synth_GRB
 		else:
 			# Run the simulations with multiprocessing
 			 
 			# Load in a number of pools to run the code.
 			with mp.Pool(num_cores) as pool:
-				synth_GRBs = pool.map(simulate_observation, [template_grb, param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3], resp_mat,sim_triggers, ndet_max, bgd_rate_per_det] )
+				synth_GRBs = pool.starmap(simulate_observation, [(template_grb, param_list[i][1], param_list[i][2], param_list[i][3], resp_mat, param_list[i][0], sim_triggers, ndet_max, bgd_rate_per_det) for t in range(trials)])
 
 			# Add the new results to the list of sim results
 			for k in range(num_cores):
 
 				sim_results[["z","imx","imy","ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
-				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(t=synth_GRBs[k], dur_per=dur_per)
+				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_GRBs[k], dur_per=dur_per)
 				sim_result_ind += k
+			synth_grb_arr[i] = synth_GRBs[0]
+
 						
 			# Increment the index tacking value by the number of trials just simulated
 			# sim_result_ind += trials
@@ -90,7 +98,10 @@ def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr,
 	if ret_ave is True:
 		sim_results = make_ave_sim_res(sim_results)
 
-	return sim_results
+	if keep_synth_grbs is True:
+		return sim_results, synth_grb_arr
+	else:
+		return sim_results
 
 def make_ave_sim_res(sim_results):
 	"""
@@ -104,7 +115,7 @@ def make_ave_sim_res(sim_results):
 
 	unique_rows = np.unique(sim_results[["z","imx","imy","ndets"]])
 
-	ave_sim_results = np.zeros(shape=len(unique_rows),dtype=[("DURATION",float),("TSTART",float),("FLUENCE",float),("z",float),("imx",float),("imy",float),("ndets",float)])
+	ave_sim_results = np.zeros(shape=len(unique_rows),dtype=dt_sim_res)
 
 	ave_sim_results[["z","imx","imy","ndets"]] = unique_rows
 

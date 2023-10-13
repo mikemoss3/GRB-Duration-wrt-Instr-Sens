@@ -27,9 +27,6 @@ if run_unit_tests is True:
 	# Test utility packages
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
-a1 = np.ones(shape=(5,4))
-a2 = (1,2,3,4)
-
-print(a1*a2)

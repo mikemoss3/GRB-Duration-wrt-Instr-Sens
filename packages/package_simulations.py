@@ -26,7 +26,7 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat, z_p=0, sim_tri
 		Number of detectors enabled during the synthetic observation 
 	z : float 
 		Redshift of synthetic GRB
-	sim_triggers : bool
+	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
 	ndet_max : int
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
