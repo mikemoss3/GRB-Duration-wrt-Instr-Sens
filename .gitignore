@@ -1,2 +1,3 @@
 # Ignore data files
-./data-files/
+./data-files/template-light-curves
+./data-files/simulated-light-curves
