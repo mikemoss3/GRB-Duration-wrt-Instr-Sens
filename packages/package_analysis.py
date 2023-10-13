@@ -11,7 +11,8 @@ from packages.package_simulations import simulate_observation
 from packages.package_bayesian_block import bayesian_t_blocks
 
 
-def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr, trials, dur_per = 90, multiproc=True, num_cores = 4, sim_triggers=False,ndet_max=32768,bgd_rate_per_det=0.3):
+def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr, trials, dur_per = 90, 
+	multiproc=True, num_cores = 4, sim_triggers=False, ndet_max=32768, bgd_rate_per_det=0.3, out_file_name = None, ret_ave = False):
 	"""
 	Method to perform multiple simulations for each combination of input parameters 
 
@@ -41,6 +42,8 @@ def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr,
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
 	bgd_rate_per_det : float
 		Background rate per detector (for Swift/BAT bgd_rate_per_det is close to 0.3 cnts / s / det across mission lifetime)
+	out_file_name : string
+		File name of .txt file to write the simulation result out to. 
 	"""
 
 	# Make a list of all parameter combinations	
@@ -81,5 +84,33 @@ def many_simulations(template_grb, resp_mat, z_arr, imx_arr, imy_arr, ndets_arr,
 			# Increment the index tacking value by the number of trials just simulated
 			# sim_result_ind += trials
 
+	if out_file_name is not None:
+		np.savetxt(out_file_name,sim_results)
+
+	if ret_ave is True:
+		sim_results = make_ave_sim_res(sim_results)
+
 	return sim_results
 
+def make_ave_sim_res(sim_results):
+	"""
+	Method to make an average sim_results array for each unique parameter combination
+
+	Attributes:
+	----------
+	sim_results : np.ndarray
+		sim_results array 
+	"""
+
+	unique_rows = np.unique(sim_results[["z","imx","imy","ndets"]])
+
+	ave_sim_results = np.zeros(shape=len(unique_rows),dtype=[("DURATION",float),("TSTART",float),("FLUENCE",float),("z",float),("imx",float),("imy",float),("ndets",float)])
+
+	ave_sim_results[["z","imx","imy","ndets"]] = unique_rows
+
+	for i in range(len(unique_rows)):
+		ave_sim_results["DURATION"][i] = np.sum(sim_results["DURATION"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["TSTART"][i] = np.sum(sim_results["TSTART"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["FLUENCE"][i] = np.sum(sim_results["FLUENCE"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+
+	return ave_sim_results
