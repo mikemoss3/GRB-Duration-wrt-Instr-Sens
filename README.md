@@ -9,14 +9,15 @@ This project allows a user to measure the duration of simulated gamma-ray burst 
 ## Procedure and How-to-Use
 
 Here are short descriptions of each file and directory in the project:
+```
 * data-files/ 
 	- Holds all input files to be used for and output files created from simulations
 * packages/
-	- Holds the core packages and classes needed to run the code
+	- Holds the core packages and classes needed to run the code\\
 	$\rightarrow$ class_GRB.py 
-		- Defines a GRB object to store observed and simulated light curve and spectral information
+		- Defines a GRB object to store observed and simulated light curve and spectral information\\
 	$\rightarrow$ class_PLOTS.py
-		- Defines the class and methods used for plotting simulation results
+		- Defines the class and methods used for plotting simulation results\\
 	$\rightarrow$ class_RSP.py
 		- Defines the main class this code uses to store response matrices and the associated methods
 	$\rightarrow$ class_SPECFUNC.py
@@ -35,7 +36,7 @@ Here are short descriptions of each file and directory in the project:
 	- The intended main script of the code. All packages and classes can be called and used here.
 * perform-tests.py 
 	- A test-bed sandbox.
-
+```
 
 ### Loading a Template GRB
 First, create a GRB object that will act as a template for our simulations.
