@@ -11,9 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from packages.class_GRB import GRB
-from packages.class_RSP import ResponseMatrix
 from packages.class_SPECFUNC import PL, CPL
-from packages.package_simulations import simulate_observation
 from packages.package_analysis import many_simulations, make_param_list
 from packages.class_PLOTS import PLOTS
 
