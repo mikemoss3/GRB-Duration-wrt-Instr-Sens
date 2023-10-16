@@ -14,7 +14,7 @@ from packages.class_GRB import GRB
 from packages.class_RSP import ResponseMatrix
 from packages.class_SPECFUNC import PL, CPL
 from packages.package_simulations import simulate_observation
-from packages.package_analysis import many_simulations, make_ave_sim_res, make_param_list
+from packages.package_analysis import many_simulations, make_param_list
 from packages.class_PLOTS import PLOTS
 
 z = 1  # redshift 
@@ -22,7 +22,7 @@ imx, imy = 0., 0.  # Position on the detector plane
 ndets = 30000  # Number of enabled detectors
 
 # Make a GRB object
-template_grb = GRB(z=z,imx=imx,imy=imy)
+template_grb = GRB()
 # Make light curve 
 template_grb.load_light_curve("data-files/template-light-curves/grb_081007_1chan_1s.lc", rm_trigtime=True)
 # template_grb.load_light_curve("data-files/template-light-curves/grb_150314A_1chan_1s.lc", rm_trigtime=True)

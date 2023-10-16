@@ -2,7 +2,7 @@
 Author: Mike Moss
 Contact: mikejmoss3@gmail.com	
 
-Defines the functions that generate the duration and fluence distributions of synthetic GRBs
+Defines functions to obtain the duration and fluence measurements for many synthetic GRBs
 """
 
 import numpy as np

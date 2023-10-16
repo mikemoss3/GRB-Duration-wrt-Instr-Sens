@@ -2,7 +2,7 @@
 Author: Mike Moss
 Contact: mikejmoss3@gmail.com	
 
-Defines the main class this code uses to store GRB observed and simulated data
+Defines a GRB object to store observed and simulated light curve and spectral information.
 
 """
 
