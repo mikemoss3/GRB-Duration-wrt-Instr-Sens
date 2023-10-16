@@ -7,30 +7,22 @@ Contact: mikejmoss3@gmail.com
 This project allows a user to measure the duration of simulated gamma-ray burst (GRB) observations while taking into consideration observation conditions, such as the angle of the simulated GRB with respect to the detector bore-sight. This code is based on the work of [Moss et al. 2022](https://ui.adsabs.harvard.edu/abs/2022ApJ...927..157M/abstract).
 
 ## Procedure and How-to-Use
-```
-Here are short descriptions of each file and directory in the project:
 
-**data\-files**
-- Holds all input files to be used for and output files created from simulations <br>
-**packages** 
-- Holds the core packages and classes needed to run the code <br>
-**packages**/ __class_GRB.py__
-- Defines a GRB object to store observed and simulated light curve and spectral information <br>
-**packages**/ __class_PLOTS.py__
-- Defines the class and methods used for plotting simulation results <br>
-**packages**/ __class_RSP.py__				# Defines the main class this code uses to store response matrices and the associated methods <br>
-**packages**/ __class_SPECFUNC.py__			# Defines the all classes related to spectral functions used in this library to represent GRB spectra <br>
-**packages**/ __package_analysis.py__			# Defines functions to obtain the duration and fluence measurements for many synthetic GRBs <br>
-**packages**/ __package_bayesian_block.py__ 	# Defines the Bayesian block method to calculate the duration of a GRB from a supplied light curve <br>
-**packages**/ __package_simulations.py__		# Defines all the functions necessary to simulate an observation of a GRB using an input template, designated instrument response, and observing conditions <br>
-**unit_tests**/
-	- Holds all unit tests
-**util_packages**/
-	- Holds the support packages and libraries for the main code 
-__perform-analysis.py__
-	- The intended main script of the code. All packages and classes can be called and used here.
-__perform-tests.py__
-	- A test-bed sandbox.
+Here are short descriptions of each file and directory in the project:
+```
+├── data-files/						# Holds all input files to be used for and output files created from simulations
+├── packages/						# Holds the core packages and classes needed to run the code
+│   ├── class_GRB.py				# Defines a GRB object to store observed and simulated light curve and spectral information
+│   ├── class_PLOTS.py				# Defines the class and methods used for plotting simulation results
+│   ├── class_RSP.py				# Defines the main class this code uses to store response matrices and the associated methods
+│   ├── class_SPECFUNC.py			# Defines the all classes related to spectral functions used in this library to represent GRB spectra
+│   ├── package_analysis.py			# Defines functions to obtain the duration and fluence measurements for many synthetic GRBs
+│   ├── package_bayesian_block.py 	# Defines the Bayesian block method to calculate the duration of a GRB from a supplied light curve
+│   ├── package_simulations.py		# Defines all the functions necessary to simulate an observation of a GRB using an input template, designated instrument response, and observing conditions
+├── unit_tests/ 					# Holds all unit tests
+├── util_packages/					# Holds the support packages and libraries for the main code 
+├── perform-analysis.py				# The intended main script of the code. All packages and classes can be called and used here.
+└── perform-tests.py				# A test-bed sandbox.
 ```
 
 ### Loading a Template GRB
