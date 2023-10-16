@@ -7,7 +7,7 @@ Contact: mikejmoss3@gmail.com
 This project allows a user to measure the duration of simulated gamma-ray burst (GRB) observations while taking into consideration observation conditions, such as the angle of the simulated GRB with respect to the detector bore-sight. This code is based on the work of [Moss et al. 2022](https://ui.adsabs.harvard.edu/abs/2022ApJ...927..157M/abstract).
 
 ## Procedure and How-to-Use
-
+```
 Here are short descriptions of each file and directory in the project:
 
 **data\-files**
@@ -31,7 +31,7 @@ __perform-analysis.py__
 	- The intended main script of the code. All packages and classes can be called and used here.
 __perform-tests.py__
 	- A test-bed sandbox.
-
+```
 
 ### Loading a Template GRB
 First, create a GRB object that will act as a template for our simulations.
