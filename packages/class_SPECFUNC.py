@@ -126,7 +126,7 @@ class SPECFUNC():
 
 		Input Emin and Emax in units of keV
 		"""
-		energy_flux_kev = romberg(function=self.evaluate,args=self.params,a=emin,b=emax)  ## [keV/s/cm2]
+		energy_flux_kev = romberg(function=self.evaluate,a=emin,b=emax)  ## [keV/s/cm2]
 
 		kev2erg = 1000*1.60217657e-12
 
@@ -138,6 +138,7 @@ class SPECFUNC():
 		"""
 		Method to find the spectrum normalization based on observed flux
 		"""
+
 		return flux/self._energy_flux(emin,emax)
 
 

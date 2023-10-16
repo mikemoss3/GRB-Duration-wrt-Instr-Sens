@@ -227,7 +227,7 @@ class GRB(object):
 		# Bin size of the light curve curve
 		bin_size = (self.light_curve['TIME'][1] - self.light_curve['TIME'][0])
 		# Create a time axis from tpstart to tpend with proper bin size
-		tmp_time_arr = np.arange(tpstart,tpend+bin_size,bin_size)
+		tmp_time_arr = np.arange(tpstart, tpend+bin_size, bin_size)
 
 		# Create an array to store the flux light curve in the z_p frame
 		flux_lc_at_z_p = np.zeros(shape=len(tmp_time_arr),dtype=([("TIME",float),("RATE",float)]))

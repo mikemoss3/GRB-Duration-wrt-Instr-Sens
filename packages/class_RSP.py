@@ -9,6 +9,7 @@ import numpy as np
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from scipy.stats import norm
+import copy 
 
 from util_packages.package_det_ang_dependence import find_grid_id
 
@@ -42,6 +43,27 @@ class ResponseMatrix(object):
 		# Initialize self.MATRIX as empty array
 		self.make_empty_resp() # Contains all the response probability values for each
 		# 						'channel subset' corresponding to the energy bin for a given row
+
+
+	def __copy__(self):
+		cls = self.__class__
+		result = cls.__new__(cls)
+		result.__dict__.update(self.__dict__)
+		return result
+
+	def __deepcopy__(self, memo):
+		cls = self.__class__
+		result = cls.__new__(cls)
+		memo[id(self)] = result
+		for k, v in self.__dict__.items():
+			setattr(result, k, copy.deepcopy(v, memo))
+		return result
+
+	def copy(self):
+		return copy.deepcopy(self)
+
+	def deepcopy(self):
+		return copy.deepcopy(self)
 
 	def set_E_phot(self,E_phot_min=0,E_phot_max=500,num_phot_bins=200,verbose=True):
 		""" Class method to set the photon energy axis""" 
@@ -238,13 +260,6 @@ def make_folded_spec(source_spec_func,rsp):
 
 	binned_source_spec['ENERGY'] = rsp.ENERG_MID
 	binned_source_spec['RATE'] = source_spec_func(binned_source_spec['ENERGY'])
-
-	# Rebin the source spectrum rate into these new bins
-	# for i in range(len(binned_source_spec)-1):
-	# 	# Find the source spectrum bins that fall within this new bin
-	# 	inds = np.where( (source_spec['ENERGY'] > binned_source_spec['ENERGY'][i]) & (source_spec['ENERGY'] < binned_source_spec['ENERGY'][i+1]) )
-	# 	if len(inds[0]) > 0:
-	# 		binned_source_spec['RATE'][i] = np.sum( source_spec['RATE'][inds] ) / len(inds[0])
 
 	# Fold the correctly binned source spectrum with the response matrix
 	folded_spec['RATE'] = np.matmul(binned_source_spec['RATE'],rsp.MATRIX)
