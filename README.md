@@ -13,8 +13,7 @@ Here are short descriptions of each file and directory in the project:
 * **data-files/**
 	- Holds all input files to be used for and output files created from simulations
 * **packages/**
-	- Holds the core packages and classes needed to run the code
-	
+	- Holds the core packages and classes needed to run the code \\
 	__class_GRB.py__
 		- Defines a GRB object to store observed and simulated light curve and spectral information
 	__class_PLOTS.py__
