@@ -10,31 +10,31 @@ This project allows a user to measure the duration of simulated gamma-ray burst 
 
 Here are short descriptions of each file and directory in the project:
 ```
-* data-files/ 
+* ** data-files/ **
 	- Holds all input files to be used for and output files created from simulations
-* packages/
-	- Holds the core packages and classes needed to run the code\\
-	$\rightarrow$ class_GRB.py 
-		- Defines a GRB object to store observed and simulated light curve and spectral information\\
-	$\rightarrow$ class_PLOTS.py
-		- Defines the class and methods used for plotting simulation results\\
-	$\rightarrow$ class_RSP.py
+* ** packages/ **
+	- Holds the core packages and classes needed to run the code
+	__ class_GRB.py __
+		- Defines a GRB object to store observed and simulated light curve and spectral information
+	__ class_PLOTS.py __
+		- Defines the class and methods used for plotting simulation results
+	__ class_RSP.py __
 		- Defines the main class this code uses to store response matrices and the associated methods
-	$\rightarrow$ class_SPECFUNC.py
+	__ class_SPECFUNC.py __
 		- Defines the all classes related to spectral functions used in this library to represent GRB spectra
-	$\rightarrow$ package_analysis.py
+	__ package_analysis.py __
 		- Defines functions to obtain the duration and fluence measurements for many synthetic GRBs
-	$\rightarrow$ package_bayesian_block.py
+	__ package_bayesian_block.py __
 		- Defines the Bayesian block method to calculate the duration of a GRB from a supplied light curve
-	$\rightarrow$ package_simulations.py
+	__ package_simulations.py __
 		- Defines all the functions necessary to simulate an observation of a GRB using an input template, designated instrument response, and observing conditions
-* unit_tests/
+* ** unit_tests/ **
 	- Holds all unit tests
-* util_packages/
+* ** util_packages/ **
 	- Holds the support packages and libraries for the main code 
-* perform-analysis.py
+* __ perform-analysis.py __
 	- The intended main script of the code. All packages and classes can be called and used here.
-* perform-tests.py 
+* __ perform-tests.py __
 	- A test-bed sandbox.
 ```
 
