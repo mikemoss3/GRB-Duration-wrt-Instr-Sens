@@ -15,19 +15,19 @@ Here are short descriptions of each file and directory in the project:
 * **packages/**
 	- Holds the core packages and classes needed to run the code <br>
 	__class_GRB.py__
-		- Defines a GRB object to store observed and simulated light curve and spectral information
+		- Defines a GRB object to store observed and simulated light curve and spectral information <br>
 	__class_PLOTS.py__
-		- Defines the class and methods used for plotting simulation results
+		- Defines the class and methods used for plotting simulation results <br>
 	__class_RSP.py__
-		- Defines the main class this code uses to store response matrices and the associated methods
+		- Defines the main class this code uses to store response matrices and the associated methods <br>
 	__class_SPECFUNC.py__
-		- Defines the all classes related to spectral functions used in this library to represent GRB spectra
+		- Defines the all classes related to spectral functions used in this library to represent GRB spectra <br>
 	__package_analysis.py__
-		- Defines functions to obtain the duration and fluence measurements for many synthetic GRBs
+		- Defines functions to obtain the duration and fluence measurements for many synthetic GRBs <br>
 	__package_bayesian_block.py__
-		- Defines the Bayesian block method to calculate the duration of a GRB from a supplied light curve
+		- Defines the Bayesian block method to calculate the duration of a GRB from a supplied light curve <br>
 	__package_simulations.py__
-		- Defines all the functions necessary to simulate an observation of a GRB using an input template, designated instrument response, and observing conditions
+		- Defines all the functions necessary to simulate an observation of a GRB using an input template, designated instrument response, and observing conditions <br>
 * **unit_tests/**
 	- Holds all unit tests
 * **util_packages/**
