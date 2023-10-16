@@ -10,31 +10,31 @@ This project allows a user to measure the duration of simulated gamma-ray burst 
 
 Here are short descriptions of each file and directory in the project:
 
-* ** data-files/ **
+* **data-files/**
 	- Holds all input files to be used for and output files created from simulations
-* ** packages/ **
+* **packages/**
 	- Holds the core packages and classes needed to run the code
-	__ class_GRB.py __
+	__class_GRB.py__
 		- Defines a GRB object to store observed and simulated light curve and spectral information
-	__ class_PLOTS.py __
+	__class_PLOTS.py__
 		- Defines the class and methods used for plotting simulation results
-	__ class_RSP.py __
+	__class_RSP.py__
 		- Defines the main class this code uses to store response matrices and the associated methods
-	__ class_SPECFUNC.py __
+	__class_SPECFUNC.py__
 		- Defines the all classes related to spectral functions used in this library to represent GRB spectra
-	__ package_analysis.py __
+	__package_analysis.py__
 		- Defines functions to obtain the duration and fluence measurements for many synthetic GRBs
-	__ package_bayesian_block.py __
+	__package_bayesian_block.py__
 		- Defines the Bayesian block method to calculate the duration of a GRB from a supplied light curve
-	__ package_simulations.py __
+	__package_simulations.py__
 		- Defines all the functions necessary to simulate an observation of a GRB using an input template, designated instrument response, and observing conditions
-* ** unit_tests/ **
+* **unit_tests/**
 	- Holds all unit tests
-* ** util_packages/ **
+* **util_packages/**
 	- Holds the support packages and libraries for the main code 
-* __ perform-analysis.py __
+* __perform-analysis.py__
 	- The intended main script of the code. All packages and classes can be called and used here.
-* __ perform-tests.py __
+* __perform-tests.py__
 	- A test-bed sandbox.
 
 
