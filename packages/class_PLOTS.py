@@ -74,7 +74,6 @@ class PLOTS(object):
 		ax.tick_params(direction="in",which="both")
 		ax.margins(x=0,y=0)
 
-
 	def duration_overlay(self,light_curve,order_type=2,ax=None,**kwargs):
 		"""
 		Method to plot simulated duration measures overlayed on template light curve
@@ -173,7 +172,7 @@ class PLOTS(object):
 		fig = plt.gcf()
 
 		im = ax.scatter(self.sim_results['imx'],self.sim_results['imy'],c=self.sim_results['DURATION'],cmap='viridis',**kwargs)
-		fig.colorbar(im)
+		cbar = fig.colorbar(im)
 
 		ax.axhline(y=0,color="k",alpha=0.2)
 		ax.axvline(x=0,color="k",alpha=0.2)
@@ -181,6 +180,12 @@ class PLOTS(object):
 		ax.set_xlim(-imx_max,imx_max)
 		ax.set_ylim(-imy_max,imy_max)
 
+		ax.set_xlabel("IMX",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_ylabel("IMY",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		cbar.set_label("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
 	def plot_light_curves(self,grbs,labels=None,ax=None,alpha=0.7,**kwargs):
