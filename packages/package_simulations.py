@@ -8,23 +8,24 @@ Defines all the functions necessary to simulate an observation of a GRB using an
 
 import numpy as np
 from packages.class_GRB import GRB
+from packages.class_RSP import ResponseMatrix
 from util_packages.package_det_ang_dependence import find_pcode, find_inc_ang
 
 
-def simulate_observation(template_grb, imx, imy, ndets, resp_mat, z_p=0, sim_triggers=False,ndet_max=32768,bgd_rate_per_det=0.3):
+def simulate_observation(template_grb, imx, imy, ndets, resp_mat=None, z_p=0, sim_triggers=False,ndet_max=32768,bgd_rate_per_det=0.3):
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
 
 	Attributes:
 	template_grb : GRB 
 		GRB class object that holds the source frame information of the template GRB
-	imx, imy : 			float, float 
+	imx, imy : 	float, float 
 		The x and y position of the GRB on the detector plane
 	resp_mat : RSP
-		Response matrix to convolve the template spectrum with
+		Response matrix to convolve the template spectrum with. If no response matrix is given, a Swift/BAT response matrix is assumed from the given imx, imy
 	ndets : int
 		Number of detectors enabled during the synthetic observation 
-	z : float 
+	z_p : float 
 		Redshift of synthetic GRB
 	sim_triggers : boolean
 		Whether or not to simulate the Swift/BAT trigger algorithms or not
@@ -33,6 +34,8 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat, z_p=0, sim_tri
 	bdg_rate_per_det : float 
 		Background level to be added to the synthetic light curve
 	"""
+
+	bgd_rate_per_det = 0.3
 
 	# Initialize synth_GRB
 	synth_GRB = template_grb.copy()
@@ -47,6 +50,9 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat, z_p=0, sim_tri
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
 	# Fold GRB through instrument response (RSP selected based on position on the detector plane)
+	if resp_mat is None:
+		resp_mat = ResponseMatrix()
+		resp_mat.load_SwiftBAT_resp(imx,imy)
 	folded_spec = resp_mat.fold_spec(template_grb.specfunc)
 	rate_15_350keV = band_rate(folded_spec,15,350) * det_frac
 	synth_GRB.light_curve['RATE'] = synth_GRB.light_curve['RATE']*rate_15_350keV
@@ -96,13 +102,12 @@ def apply_mask_weighting(light_curve,imx,imy,ndets,bgd_rate):
 	correction = np.cos(angle_inc*np.pi/180)*pcode*ndets*fraction_correction(pcode) # total correction factor
 
 	# Rough calculation of the background standard deviation 
-	# stdev_backgroud = np.std(light_curve["RATE"][0:20])
 	stdev_backgroud = np.sqrt(np.mean(light_curve['RATE'][0:20]))
 
+	# Use error propagation to calculate the uncertainty in the RATE for the mask-weight light curve
+	light_curve['UNC'] = np.sqrt( (light_curve['RATE']/np.power(correction,2.))+np.power(stdev_backgroud/correction,2.))
 	# Calculate the mask-weighted RATE column
 	light_curve['RATE'] = (light_curve["RATE"] - bgd_rate)/correction
-	# Use error propagation to calculate the uncertainty in the RATE for the mask-weight light curve
-	light_curve['UNC'] = np.sqrt( np.power(light_curve['UNC']/correction,2.)+np.power(stdev_backgroud/correction,2.))
 
 	return light_curve
 
