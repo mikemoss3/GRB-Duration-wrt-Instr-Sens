@@ -9,7 +9,7 @@ This project allows a user to measure the duration of simulated gamma-ray burst 
 ## Procedure and How-to-Use
 
 Here are short descriptions of each file and directory in the project:
-```
+
 * ** data-files/ **
 	- Holds all input files to be used for and output files created from simulations
 * ** packages/ **
@@ -36,7 +36,7 @@ Here are short descriptions of each file and directory in the project:
 	- The intended main script of the code. All packages and classes can be called and used here.
 * __ perform-tests.py __
 	- A test-bed sandbox.
-```
+
 
 ### Loading a Template GRB
 First, create a GRB object that will act as a template for our simulations.
