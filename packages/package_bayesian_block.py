@@ -24,7 +24,11 @@ def bayesian_t_blocks(grb,dur_per=90,ncp_prior=20):
 	# Check if any GTI (good time intervals) were found
 	if (bin_edges[0] == grb.light_curve['TIME'][0]) and (bin_edges[1] == grb.light_curve['TIME'][-1]):
 		# If true, then no GTI's were found
-		return 0, 0, 0.
+
+		# Set duration information for the GRB object 
+		grb.set_duration(0., 0., 0., dur_per, ncp_prior)
+		
+		return 0., 0., 0.
 	else:
 		# Calculate total duration and start time 
 		t_dur_tot = bin_edges[-2] - bin_edges[1]
@@ -44,5 +48,8 @@ def bayesian_t_blocks(grb,dur_per=90,ncp_prior=20):
 
 		duration = t_end - t_start
 		phot_fluence = np.sum(grb.light_curve['RATE'][np.argmax(t_start<=grb.light_curve['TIME']):np.argmax(t_end<=grb.light_curve['TIME'])])
+
+		# Set duration information for the GRB object 
+		grb.set_duration(duration, t_start, phot_fluence, dur_per, ncp_prior)
 
 	return duration, t_start, phot_fluence

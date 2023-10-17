@@ -11,6 +11,7 @@ from astropy.io import fits
 import copy 
 
 from packages.class_SPECFUNC import SPECFUNC
+from packages.package_bayesian_block import bayesian_t_blocks
 from util_packages.package_cosmology import lum_dis, k_corr
 import util_packages.globalconstants as gc
 
@@ -46,6 +47,11 @@ class GRB(object):
 		if spectrum is not None:
 			self.spectrum = spectrum
 
+		# Duration information (will remain None until a duration finding algorithm is run on the burst)
+		self.dur_per = None
+		self.ncp_prior = None
+		self.duration, self.t_start, self.phot_fluence
+
 	def __copy__(self):
 		cls = self.__class__
 		result = cls.__new__(cls)
@@ -65,6 +71,36 @@ class GRB(object):
 
 	def deepcopy(self):
 		return copy.deepcopy(self)
+
+	def set_duration(self, duration, t_start, phot_fluence=None, dur_per=None, ncp_prior=None):
+		"""
+		Method to set the 
+		"""
+
+		self.duration = duration
+		self.t_start = t_start
+		if phot_fluence is not None:
+			self.phot_fluence = phot_fluence
+		if dur_per is not None:
+			self.dur_per = dur_per
+		if ncp_prior is not None:
+			self.ncp_prior = ncp_prior
+
+	def get_duration(self, dur_per=90, ncp_prior=20):
+		"""
+		Method to get the duration of the lightcurve using a Bayesian block algorithm
+		"""
+
+		# If the same duration percentage and ncp_prior are called for, return the current duration information
+		if (self.dur_per == dur_per) and (self.ncp_prior == ncp_prior):
+			return self.duration, self.t_start, self.phot_fluence		
+		else:
+			# Otherwise calculate new duration information
+			self.dur_per = dur_per
+			self.ncp_prior = ncp_prior
+			self.duration, self.t_start, self.phot_fluence = bayesian_t_blocks(self,dur_per=dur_per,ncp_prior=ncp_prior)
+
+			return self.duration, self.t_start, self.phot_fluence
 
 	def load_specfunc(self,specfunc,tstart=None,tend=None):
 		"""
