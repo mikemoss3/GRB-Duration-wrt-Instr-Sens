@@ -6,7 +6,7 @@ Test running sandbox and unit test runner
 
 """
 
-run_unit_tests = False 
+run_unit_tests = True
 
 if run_unit_tests is True:
 	import unittest
@@ -26,7 +26,19 @@ if run_unit_tests is True:
 
 	# Test utility packages
 
-import numpy as np
-import matplotlib.pyplot as plt
+# import numpy as np
+# from packages.class_SPECFUNC import PL, CPL, Band
+
+# spec = Band()
+# print(spec(5))
+
+# energy = 10 
+# energy = np.array([10,20,30,40,50,60])
+# e_peak = 50
+# i = energy < e_peak
+
+# print(i)
+# print(energy[i])
+
 
 
