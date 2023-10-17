@@ -206,7 +206,7 @@ class PLOTS(object):
 		# For an array of GRBs
 		if hasattr(grbs,'__len__'):
 			for i in range(len(grbs)):
-				ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label=labels[i],**kwargs)
+				ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
 		# For a single GRB
 		else:
 			ax.errorbar(x=grbs['TIME'],y=grbs['RATE'],yerr=grbs['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)

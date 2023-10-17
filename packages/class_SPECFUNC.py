@@ -124,9 +124,13 @@ class SPECFUNC():
 		"""
 		Method to find the total energy flux of the spectral model within the given energy range
 
-		Input Emin and Emax in units of keV
+		Attributes:
+		----------
+		emin, emax : float, float
+			Defines the lower and upper bounds of the energy interval over which to evaluate the energy flux. Unit of keV)
 		"""
 		energy_flux_kev = romberg(function=self.evaluate,a=emin,b=emax)  ## [keV/s/cm2]
+		# energy_flux_kev = romberg(function=lambda x: x*self.evaluate(x),a=emin,b=emax)  ## [keV/s/cm2]
 
 		kev2erg = 1000*1.60217657e-12
 
@@ -140,6 +144,16 @@ class SPECFUNC():
 		"""
 
 		return flux/self._energy_flux(emin,emax)
+
+	def _phot_flux(self,emin,emax):
+		"""
+		Method to find the total photon flux of the spectral model within the given energy range
+
+		Attributes:
+		----------
+		emin, emax : float, float
+			Defines the lower and upper bounds of the energy interval over which to evaluate the energy flux. Unit of keV)
+		"""
 
 
 class PL(SPECFUNC):

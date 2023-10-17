@@ -38,6 +38,13 @@ Next load a light curve for `template_grb`. Currently, the `GRB` class can load 
 template_grb.load_light_curve("data-files/template-light-curves/grb_081007_1chan_1s.lc", rm_trigtime=True)
 ```
 
+Since this light curve is associated with a GRB observed at a redshift of `z=0.5295`, the redshift should be included with the GRB
+
+```
+template_grb.z = 0.5295
+```
+Alternatively, a rest-frame light curve could have been used for `template_grb` and no redshift would have been needed.
+
 Now a spectral function must be defined for the GRB. In this example, a power law spectral function with a spectral index $\alpha = -1$ and $norm = 4$ (note: the normalization energy is set to $e_{norm} = 1$ keV by default[^2])
 ```
 from packages.class_SPECFUNC import PL

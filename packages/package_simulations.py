@@ -35,15 +35,13 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat=None, z_p=0, si
 		Background level to be added to the synthetic light curve
 	"""
 
-	bgd_rate_per_det = 0.3
-
 	# Initialize synth_GRB
 	synth_GRB = template_grb.copy()
 	synth_GRB.imx, synth_GRB.imy = imx, imy
 	synth_GRB.z = z_p
 
+	
 	# Apply distance corrections to template GRB light curve to create synthetic GRB light cure.
-	# This assumes that the template light curve is in the source frame
 	synth_GRB.move_to_new_frame(z_o=template_grb.z, z_p=z_p)
 
 	# Apply observing condition corrections (e.g., NDETS)
@@ -53,10 +51,11 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat=None, z_p=0, si
 	if resp_mat is None:
 		resp_mat = ResponseMatrix()
 		resp_mat.load_SwiftBAT_resp(imx,imy)
+
 	folded_spec = resp_mat.fold_spec(template_grb.specfunc)
-	rate_15_350keV = band_rate(folded_spec,15,350) * det_frac
-	synth_GRB.light_curve['RATE'] = synth_GRB.light_curve['RATE']*rate_15_350keV
-	synth_GRB.light_curve['UNC'] = synth_GRB.light_curve['UNC']*rate_15_350keV
+	rate_in_band = band_rate(folded_spec,15,350) * det_frac
+	synth_GRB.light_curve['RATE'] = synth_GRB.light_curve['RATE']*rate_in_band
+	synth_GRB.light_curve['UNC'] = synth_GRB.light_curve['UNC']*rate_in_band
 
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 

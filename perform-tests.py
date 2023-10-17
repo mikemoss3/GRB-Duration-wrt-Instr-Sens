@@ -6,24 +6,21 @@ Test running sandbox and unit test runner
 
 """
 
+from packages.class_SPECFUNC import PL, CPL
 
-# import numpy as np
-# from packages.class_SPECFUNC import PL, CPL, Band
+spec = CPL(alpha=-1.5,norm=1)
 
-# spec = Band()
-# print(spec(5))
-
-# energy = 10 
-# energy = np.array([10,20,30,40,50,60])
-# e_peak = 50
-# i = energy < e_peak
-
-# print(i)
-# print(energy[i])
+flux = 8.99e-07
+norm = spec._find_norm(flux, 15, 150)
+print(norm)
 
 
 
-run_unit_tests = True
+
+# spec = CPL(alpha=-1.5,norm=norm)
+
+
+run_unit_tests = False
 if run_unit_tests is True:
 	import unittest
 

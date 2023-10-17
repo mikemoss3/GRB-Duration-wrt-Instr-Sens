@@ -50,7 +50,7 @@ class GRB(object):
 		# Duration information (will remain None until a duration finding algorithm is run on the burst)
 		self.dur_per = None
 		self.ncp_prior = None
-		self.duration, self.t_start, self.phot_fluence
+		self.duration, self.t_start, self.phot_fluence = None, None, None
 
 	def __copy__(self):
 		cls = self.__class__
@@ -247,11 +247,14 @@ class GRB(object):
 		## 
 
 		# Apply distance corrections to flux values (See Bloom, Frail, and Sari 2001 Equation 4)
-		dis_corr_to_z_o, dis_corr_to_z_p = 1., 1.
+		dis_corr_to_z_o = 1.
 		if z_o != 0:
 			dis_corr_to_z_o = 4 * np.pi * np.power(lum_dis(z_o), 2.) / (1+z_o)
+
+		dis_corr_to_z_p = 1.
 		if z_p != 0:
 			dis_corr_to_z_p = 4 * np.pi * np.power(lum_dis(z_p), 2.) / (1+z_p)
+		
 		self.light_curve['RATE'] = self.light_curve['RATE'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
 		self.light_curve['UNC'] = self.light_curve['UNC'] * kcorr * dis_corr_to_z_o / dis_corr_to_z_p
 		
