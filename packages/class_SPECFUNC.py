@@ -247,13 +247,21 @@ class Blackbody(SPECFUNC):
 		# Initialize the return value
 		flux_value = np.zeros_like(energy,subok=False)
 
-		i = energy < 2e3
-		if i.max():
-			# If the energy is less than 2 MeV
-			flux_value[i] = self.params['norm'] * np.power(energy[i]/self.params['temp'],1.+self.params['alpha'])/(np.exp(energy[i]/self.params['temp']) - 1.)
-		i = energy >= 2e3
-		if i.max():
-			flux_value[i] = 0
+		if hasattr(energy, '__len__'):
+			i = energy < 2e3
+			if i.max():
+				# If the energy is less than 2 MeV
+				flux_value[i] = self.params['norm'] * np.power(energy[i]/self.params['temp'],1.+self.params['alpha'])/(np.exp(energy[i]/self.params['temp']) - 1.)
+			i = energy >= 2e3
+			if i.max():
+				flux_value[i] = 0
+		else:
+			if energy < 2e3:
+				# If the energy is less than 2 MeV
+				flux_value = self.params['norm'] * np.power(energy/self.params['temp'],1.+self.params['alpha'])/(np.exp(energy/self.params['temp']) - 1.)
+			else:
+				# energy >= 2e3
+				flux_value = 0
 
 		return flux_value
 
@@ -280,7 +288,7 @@ class Band(SPECFUNC):
 		def_alpha = -1.
 		def_beta = -2.
 		def_norm = 1.
-		def_enorm = 100.
+		def_enorm = 100. # keV
 
 		self.params = {"ep" : def_ep, "alpha" : def_alpha, "beta" : def_beta, "norm" : def_norm, "enorm" : def_enorm}
 
@@ -296,12 +304,20 @@ class Band(SPECFUNC):
 		# Calculate break energy
 		e0 = self.params['ep'] / (self.params['alpha'] - self.params['beta'])
 
-		i = energy <= self.params['ep']
-		if i.max():
-			flux_value[i] = self.params['norm'] * np.power(energy[i]/self.params['enorm'], self.params['alpha']) * np.exp(- energy[i] / e0)
-		
-		i = energy > self.params['ep']
-		if i.max():
-			flux_value[i] = self.params['norm'] * np.power((self.params['alpha'] - self.params['beta']) * e0/self.params['enorm'], self.params['alpha'] - self.params['beta']) * np.exp(self.params['beta'] - self.params['alpha']) * np.power(energy[i]/self.params['enorm'],self.params['beta'])
+		if hasattr(energy, '__len__'):
+			i = energy <= self.params['ep']
+			if i.max():
+				flux_value[i] = self.params['norm'] * np.power(energy[i]/self.params['enorm'], self.params['alpha']) * np.exp(- energy[i] / e0)
+			
+			i = energy > self.params['ep']
+			if i.max():
+				flux_value[i] = self.params['norm'] * np.power((self.params['alpha'] - self.params['beta']) * e0/self.params['enorm'], self.params['alpha'] - self.params['beta']) * np.exp(self.params['beta'] - self.params['alpha']) * np.power(energy[i]/self.params['enorm'],self.params['beta'])
+		else:
+			if energy <= self.params['ep']:
+				flux_value = self.params['norm'] * np.power(energy/self.params['enorm'], self.params['alpha']) * np.exp(- energy / e0)
+			else: 
+				# energy > self.params['ep']
+				flux_value = self.params['norm'] * np.power((self.params['alpha'] - self.params['beta']) * e0/self.params['enorm'], self.params['alpha'] - self.params['beta']) * np.exp(self.params['beta'] - self.params['alpha']) * np.power(energy/self.params['enorm'],self.params['beta'])
+
 
 		return flux_value
