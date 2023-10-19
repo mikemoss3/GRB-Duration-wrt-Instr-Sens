@@ -185,7 +185,7 @@ class ResponseMatrix(object):
 		cbar = fig.colorbar(im)
 		cbar.ax.set_ylabel('Probability', rotation=270,labelpad=15)
 
-	def plot_effarea(self,ax=None,det_area=1,E_phot_bounds=None):
+	def plot_effarea(self,ax=None,det_area=1,E_phot_bounds=None,norm=1):
 		""" Plot heat map of the response matrix """
 		
 		if ax is None:
@@ -199,7 +199,7 @@ class ResponseMatrix(object):
 		
 		eff_area*=det_area
 
-		ax.step(self.ENERG_MID,eff_area)
+		ax.step(self.ENERG_MID,eff_area*norm)
 
 		if E_phot_bounds is None:
 			ax.set_xlim(self.ENERG_MID[0],self.ENERG_MID[-1])

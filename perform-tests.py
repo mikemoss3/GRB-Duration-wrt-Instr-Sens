@@ -6,18 +6,34 @@ Test running sandbox and unit test runner
 
 """
 
+import matplotlib.pyplot as plt 
+import numpy as np
+
+from packages.class_GRB	import GRB
 from packages.class_SPECFUNC import PL, CPL
-
-spec = CPL(alpha=-1.5,norm=1)
-
-flux = 8.99e-07
-norm = spec._find_norm(flux, 15, 150)
-print(norm)
+from packages.class_RSP import ResponseMatrix
 
 
+grb = GRB(z=0.1)
+grb.load_light_curve("data-files/template-light-curves/grb_160121A_1chan_1s.lc", rm_trigtime=True) # counts / sec / det
+grb.light_curve = grb.light_curve[np.argmax(-100 <= grb.light_curve['TIME']):np.argmax(grb.light_curve['TIME'] >= 100)]
+grb.light_curve['RATE'] /= 0.16  # counts / sec / cm^2
+grb.light_curve['UNC'] /= 0.16
+
+grb.load_specfunc(PL(alpha=-1.77,norm=1,enorm=50)) # Photons / sec / keV / cm^2
 
 
-# spec = CPL(alpha=-1.5,norm=norm)
+ax = plt.figure().gca()
+
+resp = ResponseMatrix()
+resp.load_rsp_from_file('sw00671231000b_preslew.rsp')
+resp.plot_effarea(ax=ax,norm = 15580)
+resp.load_SwiftBAT_resp(0.,0.)
+resp.plot_effarea(ax=ax)
+plt.show()
+
+# folded_spec = resp.fold_spec(spec)
+
 
 
 run_unit_tests = False

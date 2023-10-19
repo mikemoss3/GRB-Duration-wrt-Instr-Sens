@@ -12,7 +12,7 @@ from packages.class_RSP import ResponseMatrix
 from util_packages.package_det_ang_dependence import find_pcode, find_inc_ang
 
 
-def simulate_observation(template_grb, imx, imy, ndets, resp_mat=None, z_p=0, sim_triggers=False,ndet_max=32768,bgd_rate_per_det=0.3):
+def simulate_observation(template_grb, imx, imy, ndets, resp_mat=None, z_p=0, sim_triggers=False,ndet_max=32768,bgd_rate_per_det=0.3,area_per_det = 0.16):
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
 
@@ -33,6 +33,8 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat=None, z_p=0, si
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
 	bdg_rate_per_det : float 
 		Background level to be added to the synthetic light curve
+	area_per_det : float
+		Area of a single detector element in cm^2
 	"""
 
 	# Initialize synth_GRB
@@ -52,25 +54,26 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat=None, z_p=0, si
 		resp_mat = ResponseMatrix()
 		resp_mat.load_SwiftBAT_resp(imx,imy)
 
-	folded_spec = resp_mat.fold_spec(template_grb.specfunc)
-	rate_in_band = band_rate(folded_spec,15,350) * det_frac
-	synth_GRB.light_curve['RATE'] = synth_GRB.light_curve['RATE']*rate_in_band
-	synth_GRB.light_curve['UNC'] = synth_GRB.light_curve['UNC']*rate_in_band
+	folded_spec = resp_mat.fold_spec(template_grb.specfunc) 
+	rate_in_band = band_rate(folded_spec,15,350) * det_frac # counts / sec
+	# Using the total count rate from the spectrum and the relative flux level of the light curve, make a new light curve
+	# Note, the before this the light curve is in units of counts / sec / det, this needs to be corrected for (i.e., using the area per detector)
+	synth_GRB.light_curve['RATE'] = synth_GRB.light_curve['RATE'] * rate_in_band / area_per_det  # counts / sec / cm^2 
+	synth_GRB.light_curve['UNC'] = synth_GRB.light_curve['UNC'] * rate_in_band / area_per_det
 
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
 		# Calculate the fraction of the quadrant exposure 
 
 	# Add background to light curve 
-	bgd_rate = bgd_rate_per_det * ndets 
+	bgd_rate = bgd_rate_per_det * ndets / area_per_det # counts / sec
 	synth_GRB.light_curve['RATE'] += bgd_rate
 
 	# Apply fluctuations 
-	# synth_GRB.light_curve['RATE'] = np.random.normal(loc=synth_GRB.light_curve['RATE'],scale=synth_GRB.light_curve['UNC'])
-	synth_GRB.light_curve['RATE'] = np.random.normal(loc=synth_GRB.light_curve['RATE'],scale=np.sqrt(synth_GRB.light_curve['RATE']))
+	synth_GRB.light_curve['RATE'] = np.random.normal(loc=synth_GRB.light_curve['RATE'],scale=np.sqrt(synth_GRB.light_curve['RATE'])) 
 
 	# Apply mask-weighting to light curve (both the rate and uncertainty)
-	synth_GRB.light_curve = apply_mask_weighting(synth_GRB.light_curve,imx,imy,ndets,bgd_rate)
+	synth_GRB.light_curve = apply_mask_weighting(synth_GRB.light_curve,imx,imy,ndets,bgd_rate) # counts / sec / det
 
 	return synth_GRB
 
