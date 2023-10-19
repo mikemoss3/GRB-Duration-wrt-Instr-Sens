@@ -48,7 +48,7 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 	out_file_name : string
 		File name of .txt file to write the simulation result out to. 
 	"""
-
+	
 	# Make a list to hold the simulation results
 	sim_results = np.zeros(shape=int(len(param_list)*trials),dtype=dt_sim_res)
 	sim_result_ind = 0

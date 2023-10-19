@@ -188,7 +188,7 @@ class PLOTS(object):
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def plot_light_curves(self,grbs,labels=None,ax=None,alpha=0.7,**kwargs):
+	def plot_light_curves(self,grbs,t_window=None,labels=None,ax=None,alpha=0.7,**kwargs):
 		"""
 		Method to plot the average duration percentage as a function of the position on the detector plane
 
@@ -209,10 +209,13 @@ class PLOTS(object):
 				ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
 		# For a single GRB
 		else:
-			ax.errorbar(x=grbs['TIME'],y=grbs['RATE'],yerr=grbs['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)
+			ax.errorbar(x=grbs.light_curve['TIME'],y=grbs.light_curve['RATE'],yerr=grbs.light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)
 
 		ax.set_xlabel("Time (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		if t_window is not None:
+			ax.set_xlim(t_window)
 
 		if labels is not None:
 			ax.legend(fontsize=self.fontsize-2)

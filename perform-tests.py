@@ -23,7 +23,7 @@ grb.light_curve['UNC'] /= 0.16
 
 print(np.sum(grb.light_curve['RATE'][np.argmax(0.5 <= grb.light_curve['TIME']):np.argmax(grb.light_curve['TIME'] >= 11)])/10)
 
-"""
+
 # grb.load_specfunc(PL(alpha=-1.77,norm=4.4*10**(-3),enorm=50)) # Photons / sec / keV / cm^2
 grb.load_specfunc(PL(alpha=-1.77,norm=4.5,enorm=1)) # Photons / sec / keV / cm^2
 
@@ -42,7 +42,7 @@ plot.plot_spectra(grb,resp,en_window=[10,150],ax=ax)
 
 
 plt.show()
-"""
+
 
 
 run_unit_tests = False
