@@ -19,7 +19,7 @@ def find_grid_id(imx,imy):
 
 def find_inc_ang(imx,imy):
 	"""
-	Method to calculate the incidence angle from a given position on the detector plane 
+	Method to calculate the incidence angle (in radians) from a given position on the detector plane 
 	"""
 
 	theta = np.arctan( np.sqrt( imx**2 + imy**2 ) )

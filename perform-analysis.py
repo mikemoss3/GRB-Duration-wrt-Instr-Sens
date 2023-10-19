@@ -31,7 +31,8 @@ template_grb.load_specfunc(PL(alpha=-1.77,norm=norm,enorm=1))
 
 # Simulate many observations 
 z_arr = np.array([1])
-imx_arr = np.array([0.,0.5,0.8,1.2])
+imx_arr = np.array([0.,0.5,0.8])
+# imx_arr = np.array([0.])
 # imx_arr = np.linspace(-1,1,num=10)
 imy_arr = np.array([0.])
 # imy_arr = np.linspace(-0.7,0.7,num=10)
@@ -40,6 +41,8 @@ param_list = make_param_list(z_arr,imx_arr,imy_arr,ndets_arr)
 trials = 3
 
 sim_results, grbs = many_simulations(template_grb, param_list, trials, multiproc=False, ret_ave=True, keep_synth_grbs=True)
+
+template_grb.light_curve['RATE'] *= 0.16
 
 plots = PLOTS(sim_results)
 # plots.det_plane_map()
