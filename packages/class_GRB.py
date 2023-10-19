@@ -102,6 +102,26 @@ class GRB(object):
 
 			return self.duration, self.t_start, self.phot_fluence
 
+	def get_photon_fluence(self,dur_per=90,tmin=None,tmax=None):
+		"""
+		Method to get the photon fluence in the time interval defined by the duration percentage
+		"""
+		if (tmin is not None) and (tmax is not None):
+			return np.sum(self.light_curve['RATE'][np.argmax(tmin <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= (tmax))])				
+		else:
+			self.get_duration(dur_per=dur_per)
+			return np.sum(self.light_curve['RATE'][np.argmax(self.t_start <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= (self.t_start + self.duration))])
+
+	def get_ave_photon_flux(self,dur_per=90,tmin=None,tmax=None):
+		"""
+		Method to get the average photon flux in the T100 interval
+		"""
+		if (tmin is not None) and (tmax is not None):
+			return self.get_photon_fluence(tmin=tmin,tmax=tmax)/(tmax-tmin)
+		else:
+			self.get_duration(dur_per=dur_per)
+			return self.get_photon_fluence(dur_per=dur_per)/self.duration
+
 	def load_specfunc(self,specfunc,tstart=None,tend=None):
 		"""
 		Method to load a spectrum
@@ -156,7 +176,7 @@ class GRB(object):
 		"""
 
 		if num_bins is None:
-			num_bins = np.log10(emax/emin)*10
+			num_bins = int(np.log10(emax/emin)*20)
 
 		if spec_num is None:
 			specfunc = self.specfunc
@@ -167,7 +187,7 @@ class GRB(object):
 
 		return spectrum
 
-	def load_light_curve(self,file_name,inc_unc = True,t_offset=0,rm_trigtime=False,T100_dur=None,T100_start=None):
+	def load_light_curve(self,file_name,inc_unc = True,t_offset=0,rm_trigtime=False,T100_dur=None,T100_start=None,det_area=None):
 		"""
 		Method to load a light curve from either a .fits or .txt file
 		"""
@@ -194,6 +214,10 @@ class GRB(object):
 				self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float)])
 			else:
 				self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float),('UNC',float)])
+
+		# Correct for the size of a detector
+		if det_area is not None:
+			self.light_curve['RATE'] /= 0.16
 
 		if t_offset != 0:
 			self.light_curve['TIME'] -= t_offset

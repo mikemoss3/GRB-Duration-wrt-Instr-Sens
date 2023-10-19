@@ -12,6 +12,7 @@ import numpy as np
 from packages.class_GRB	import GRB
 from packages.class_SPECFUNC import PL, CPL
 from packages.class_RSP import ResponseMatrix
+from packages.class_PLOTS import PLOTS
 
 
 grb = GRB(z=0.1)
@@ -20,20 +21,28 @@ grb.light_curve = grb.light_curve[np.argmax(-100 <= grb.light_curve['TIME']):np.
 grb.light_curve['RATE'] /= 0.16  # counts / sec / cm^2
 grb.light_curve['UNC'] /= 0.16
 
-grb.load_specfunc(PL(alpha=-1.77,norm=1,enorm=50)) # Photons / sec / keV / cm^2
+print(np.sum(grb.light_curve['RATE'][np.argmax(0.5 <= grb.light_curve['TIME']):np.argmax(grb.light_curve['TIME'] >= 11)])/10)
 
+"""
+# grb.load_specfunc(PL(alpha=-1.77,norm=4.4*10**(-3),enorm=50)) # Photons / sec / keV / cm^2
+grb.load_specfunc(PL(alpha=-1.77,norm=4.5,enorm=1)) # Photons / sec / keV / cm^2
 
-ax = plt.figure().gca()
+# ax = plt.figure().gca()
 
 resp = ResponseMatrix()
 resp.load_rsp_from_file('sw00671231000b_preslew.rsp')
-resp.plot_effarea(ax=ax,norm = 15580)
-resp.load_SwiftBAT_resp(0.,0.)
-resp.plot_effarea(ax=ax)
+# resp.plot_effarea(ax=ax,norm = 15580)
+# resp.load_SwiftBAT_resp(0.,0.)
+# resp.plot_effarea(ax=ax)
+
+ax = plt.figure().gca()
+plot = PLOTS()
+plot.plot_spectra(grb,emin=10,emax=150,en_window=[10,150],ax=ax)
+plot.plot_spectra(grb,resp,en_window=[10,150],ax=ax)
+
+
 plt.show()
-
-# folded_spec = resp.fold_spec(spec)
-
+"""
 
 
 run_unit_tests = False

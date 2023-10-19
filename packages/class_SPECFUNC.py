@@ -108,7 +108,7 @@ class SPECFUNC():
 				Number of energy bins to use, default is 10*log(emax/emin)
 			"""
 			if num_bins is None:
-				num_bins = np.log10(emax/emin)*10
+				num_bins = int(np.log10(emax/emin)*20)
 
 			# Initialize array
 			spectrum = np.zeros(shape=num_bins,dtype=[("ENERGY",float),("RATE",float)])

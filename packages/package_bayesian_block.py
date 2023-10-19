@@ -20,7 +20,6 @@ def bayesian_t_blocks(grb,dur_per=90,ncp_prior=20):
 
 	# Bin the light curve 
 	bin_edges = bayesian_blocks(t=grb.light_curve['TIME'],x=grb.light_curve['RATE'],sigma=grb.light_curve['UNC'],fitness="measures",ncp_prior=ncp_prior) # Find the T90 and the fluence 
-
 	# Check if any GTI (good time intervals) were found
 	if (bin_edges[0] == grb.light_curve['TIME'][0]) and (bin_edges[1] == grb.light_curve['TIME'][-1]):
 		# If true, then no GTI's were found
