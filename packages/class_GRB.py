@@ -107,10 +107,10 @@ class GRB(object):
 		Method to get the photon fluence in the time interval defined by the duration percentage
 		"""
 		if (tmin is not None) and (tmax is not None):
-			return np.sum(self.light_curve['RATE'][np.argmax(tmin <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= tmax)])				
+			return np.sum(self.light_curve['RATE'][np.argmax(tmin <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= tmax)]) * self.dt			
 		else:
 			self.get_duration(dur_per=dur_per)
-			return np.sum(self.light_curve['RATE'][np.argmax(self.t_start <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= (self.t_start + self.duration))])
+			return np.sum(self.light_curve['RATE'][np.argmax(self.t_start <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= (self.t_start + self.duration))]) * self.dt
 
 	def get_ave_photon_flux(self,dur_per=90,tmin=None,tmax=None):
 		"""
@@ -214,6 +214,9 @@ class GRB(object):
 				self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float)])
 			else:
 				self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float),('UNC',float)])
+
+		# Time bin size
+		self.dt = (self.light_curve['TIME'][1] - self.light_curve['TIME'][0])
 
 		# Correct for the size of a detector
 		if det_area is not None:

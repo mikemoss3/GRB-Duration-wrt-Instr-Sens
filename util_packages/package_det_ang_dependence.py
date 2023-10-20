@@ -48,3 +48,18 @@ def find_pcode(imx,imy):
 	# This has the result of rounding down.
 
 	return pcode_img[j,i]
+
+
+def fraction_correction(imx, imy):
+	"""
+	Method that calculates and returns a correction fraction that was found to be needed for off-axis bursts. 
+	This factor is needed to correct for the FFT convolution that is used for Swift/BAT
+	This correction was empirically fit with a quadratic function, which is how the parameter values in this method were determined.
+	"""
+
+	pcode = find_pcode(imx, imy)
+
+	a=1.1205830634986802
+	b=-1.2137924102819533
+	c=0.6178450561688628
+	return a + (b*pcode) + (c*np.power(pcode,2))
