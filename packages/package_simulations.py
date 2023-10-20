@@ -9,7 +9,7 @@ Defines all the functions necessary to simulate an observation of a GRB using an
 import numpy as np
 from packages.class_GRB import GRB
 from packages.class_RSP import ResponseMatrix
-from util_packages.package_det_ang_dependence import find_pcode, find_inc_ang
+from util_packages.package_det_ang_dependence import find_pcode, find_inc_ang, fraction_correction
 
 
 def simulate_observation(template_grb, imx, imy, ndets, 
@@ -107,7 +107,7 @@ def apply_mask_weighting(light_curve,imx,imy,ndets,bgd_rate):
 	angle_inc = find_inc_ang(imx,imy) # rad
 
 	# Total mask-weighting correction
-	correction = np.cos(angle_inc)*pcode*ndets*fraction_correction(pcode) # total correction factor
+	correction = np.cos(angle_inc)*pcode*ndets*fraction_correction(imx, imy) # total correction factor
 
 	print("cos(theta), pcode, frac, 1/corr_fac = {:.3f}, {:.3f}, {:.3f}, {:.3f}".format(np.cos(angle_inc), pcode, fraction_correction(pcode), correction) )
 
@@ -122,14 +122,3 @@ def apply_mask_weighting(light_curve,imx,imy,ndets,bgd_rate):
 	print("max after = {:0.4f}\n".format(np.max(light_curve['RATE'])))
 
 	return light_curve
-
-def fraction_correction(pcode):
-	"""
-	Method that calculates and returns a correction fraction that was found to be needed for off-axis bursts. 
-	This factor is needed to correct for the FFT convolution that is used for Swift/BAT
-	This correction was empirically fit with a quadratic function, which is how the parameter values in this method were determined.
-	"""
-	a=1.1205830634986802
-	b=-1.2137924102819533
-	c=0.6178450561688628
-	return a + (b*pcode) + (c*np.power(pcode,2))
