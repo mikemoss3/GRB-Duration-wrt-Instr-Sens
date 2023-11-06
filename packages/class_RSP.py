@@ -262,7 +262,7 @@ def make_folded_spec(source_spec_func,rsp):
 	binned_source_spec['RATE'] = source_spec_func(binned_source_spec['ENERGY'])
 
 	# Fold the correctly binned source spectrum with the response matrix
-	folded_spec['RATE'] = np.matmul(binned_source_spec['RATE'],rsp.MATRIX)
+	folded_spec['RATE'] = np.matmul(binned_source_spec['RATE'],rsp.MATRIX)/(rsp.ECHAN_HI - rsp.ECHAN_LO)
 
 	# What should the uncertainty be?
 	# folded_spec['UNC'] = np.sqrt(folded_spec['RATE'])
