@@ -20,8 +20,9 @@ def bayesian_t_blocks(grb,dur_per=90,ncp_prior=20):
 
 	# Bin the light curve 
 	bin_edges = bayesian_blocks(t=grb.light_curve['TIME'],x=grb.light_curve['RATE'],sigma=grb.light_curve['UNC'],fitness="measures",ncp_prior=ncp_prior) # Find the T90 and the fluence 
+
 	# Check if any GTI (good time intervals) were found
-	if (bin_edges[0] == grb.light_curve['TIME'][0]) and (bin_edges[1] == grb.light_curve['TIME'][-1]):
+	if len(bin_edges) <= 3:
 		# If true, then no GTI's were found
 
 		# Set duration information for the GRB object 
@@ -35,6 +36,9 @@ def bayesian_t_blocks(grb,dur_per=90,ncp_prior=20):
 
 		## Find TXX
 		emission_interval = grb.light_curve[np.argmax(t_start_tot<=grb.light_curve['TIME']):np.argmax((t_start_tot+t_dur_tot)<=grb.light_curve['TIME'])]
+		if len(emission_interval) == 0:
+			# Then no Bayesian blocks were found.
+			return 0, 0, 0
 		# Find the total fluence 
 		tot_fluence = np.sum(emission_interval['RATE'])
 		# Find the normalized cumulative sum between the total duration 

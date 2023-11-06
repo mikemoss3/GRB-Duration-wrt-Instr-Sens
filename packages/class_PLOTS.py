@@ -154,6 +154,7 @@ class PLOTS(object):
 		ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 
 		self.plot_aesthetics(ax)
+		ax.margins(x=0.1,y=0.05)
 
 	def det_plane_map(self,ax=None,imx_max=1.5,imy_max=1,dimx=0.1,dimy=0.1,**kwargs):
 		"""

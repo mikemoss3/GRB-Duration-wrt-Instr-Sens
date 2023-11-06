@@ -40,15 +40,15 @@ def simulate_observation(template_grb, imx, imy, ndets,
 	"""
 
 	# Initialize synth_GRB
-	synth_GRB = template_grb.copy()
+	synth_GRB = template_grb.copy() # Copies light curve and spectrum
 	synth_GRB.imx, synth_GRB.imy = imx, imy
 	synth_GRB.z = z_p
 
-	
-	# Apply distance corrections to template GRB light curve to create synthetic GRB light cure.
+
+	# Apply distance corrections to GRB light curve and spectrum
 	synth_GRB.move_to_new_frame(z_o=template_grb.z, z_p=z_p)
 
-	# Apply observing condition corrections (e.g., NDETS)
+	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
 	# Fold GRB through instrument response (RSP selected based on position on the detector plane)
@@ -57,7 +57,7 @@ def simulate_observation(template_grb, imx, imy, ndets,
 		resp_mat.load_SwiftBAT_resp(imx,imy)
 
 
-	folded_spec = resp_mat.fold_spec(template_grb.specfunc)  # counts / sec / keV
+	folded_spec = resp_mat.fold_spec(synth_GRB.specfunc)  # counts / sec / keV
 	rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec 
 
 	# Using the total count rate from the spectrum and the relative flux level of the light curve, make a new light curve
@@ -76,7 +76,6 @@ def simulate_observation(template_grb, imx, imy, ndets,
 
 	# Apply fluctuations 
 	synth_GRB.light_curve['RATE'] = np.random.normal(loc=synth_GRB.light_curve['RATE'],scale=np.sqrt(synth_GRB.light_curve['RATE'])) # counts / sec
-	print("max before = {:0.4f}".format(np.max(synth_GRB.light_curve['RATE'])))
 
 	# Apply mask-weighting to light curve (both the rate and uncertainty)
 	synth_GRB.light_curve = apply_mask_weighting(synth_GRB.light_curve,imx,imy,ndets,bgd_rate) # background-subtracted counts / sec / det
@@ -109,8 +108,6 @@ def apply_mask_weighting(light_curve,imx,imy,ndets,bgd_rate):
 	# Total mask-weighting correction
 	correction = np.cos(angle_inc)*pcode*ndets*fraction_correction(imx, imy) # total correction factor
 
-	print("cos(theta), pcode, frac, 1/corr_fac = {:.3f}, {:.3f}, {:.3f}, {:.3f}".format(np.cos(angle_inc), pcode, fraction_correction(pcode), correction) )
-
 	# Rough calculation of the background standard deviation 
 	stdev_backgroud = np.sqrt(np.mean(light_curve['RATE'][0:20]))
 
@@ -118,7 +115,5 @@ def apply_mask_weighting(light_curve,imx,imy,ndets,bgd_rate):
 	light_curve['UNC'] = np.sqrt( (light_curve['RATE']/np.power(correction,2.))+np.power(stdev_backgroud/correction,2.))
 	# Calculate the mask-weighted RATE column
 	light_curve['RATE'] = (light_curve["RATE"] - bgd_rate)/correction # background-subtracted counts / sec / dets
-
-	print("max after = {:0.4f}\n".format(np.max(light_curve['RATE'])))
 
 	return light_curve
