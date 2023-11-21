@@ -71,7 +71,8 @@ def simulate_observation(template_grb, imx, imy, ndets,
 		# Calculate the fraction of the quadrant exposure 
 
 	# Add background to light curve 
-	bgd_rate = bgd_rate_per_det * ndets # counts / sec
+	time_bin_size = synth_GRB.light_curve['TIME'][1] - synth_GRB.light_curve['TIME'][0]
+	bgd_rate = bgd_rate_per_det * ndets * rate_in_band * time_bin_size # counts / sec
 	synth_GRB.light_curve['RATE'] += bgd_rate # counts / sec
 
 	# Apply fluctuations 
