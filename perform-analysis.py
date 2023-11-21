@@ -16,15 +16,18 @@ from packages.class_SPECFUNC import PL, CPL
 from packages.package_analysis import many_simulations, make_param_list
 
 
-"""
+
+
 # GRB 060614 info
 z = 0.1254
 fn = "data-files/template-light-curves/grb_060614_1chan_64ms.lc"
 alpha = -2.33
 ep = 134.112
 norm = 9.47830E-03
-z_arr = np.array([0.1254,0.2,0.3,0.35,0.4])
+z_arr = np.array([0.1254,0.2,0.3,0.35,0.37,0.4])
+# z_arr = np.array([0.35])
 t90_obs = 109.104
+tmax = 250
 """
 # GRB 211211 info
 z = 0.076
@@ -32,16 +35,18 @@ fn = "data-files/template-light-curves/grb_211211A_1chan_64ms.lc"
 alpha = -1.442
 ep =  512.674
 norm = 0.135641E-01
-z_arr = np.array([0.076,0.1,0.2,0.3,0.4,0.5,0.55,0.6,0.65,0.7]) # 211211A
+z_arr = np.array([0.076,0.1,0.2,0.3,0.4,0.5,0.55,0.6,0.65,0.7])
+# z_arr = np.array([0.5]) 
 t90_obs = 50.712
-
+tmax = 140
+"""
 
 # Make a GRB object
 template_grb = GRB(z=z)
 # Make light curve 
 template_grb.load_light_curve(fn, rm_trigtime=True, det_area=0.16)
 # template_grb.load_light_curve("data-files/template-light-curves/grb_211211A_1chan_64ms.lc", rm_trigtime=True, det_area=0.16)
-template_grb.light_curve = template_grb.light_curve[np.argmax(-20 <= template_grb.light_curve['TIME']):np.argmax(template_grb.light_curve['TIME'] >= 170)]
+template_grb.light_curve = template_grb.light_curve[np.argmax(-70 <= template_grb.light_curve['TIME']):np.argmax(template_grb.light_curve['TIME'] >= tmax)]
 
 template_grb.load_specfunc(CPL(alpha= alpha, ep=ep, norm=norm, enorm=50))
 
@@ -58,8 +63,10 @@ sim_results, grbs = many_simulations(template_grb, param_list, trials, multiproc
 template_grb.light_curve['RATE'] *= 0.16
 
 plots = PLOTS(sim_results)
-# plots.plot_light_curves(template_grb)
+# plots.plot_light_curves(grbs[0],labels="z=0.5",t_window=[-50,tmax])
 # plots.det_plane_map()
 plots.dur_vs_param(obs_param="z",t_true=t90_obs,dur_frac=True)
-plots.plot_light_curves(grbs=np.append(template_grb,grbs),labels=["Template",*z_arr],t_window=[-20,200])
+# plots.plot_light_curves(grbs=np.append(template_grb,grbs),labels=["Template",*z_arr],t_window=[-20,200])
 plt.show()
+
+# plt.savefig("data-files/figs/2023-11-21/z-evo-grb-060614.png")
