@@ -207,7 +207,10 @@ class PLOTS(object):
 		# For an array of GRBs
 		if hasattr(grbs,'__len__'):
 			for i in range(len(grbs)):
-				ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE']*grbs[i].dt,yerr=grbs[i].light_curve['UNC']*grbs[i].dt,fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
+				if labels is None:
+					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE']*grbs[i].dt,yerr=grbs[i].light_curve['UNC']*grbs[i].dt,fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
+				else:
+					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE']*grbs[i].dt,yerr=grbs[i].light_curve['UNC']*grbs[i].dt,fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
 		# For a single GRB
 		else:
 			ax.errorbar(x=grbs.light_curve['TIME'],y=grbs.light_curve['RATE']*grbs.dt,yerr=grbs.light_curve['UNC']*grbs.dt,fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)

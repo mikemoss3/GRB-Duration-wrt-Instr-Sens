@@ -44,7 +44,6 @@ def simulate_observation(template_grb, imx, imy, ndets,
 	synth_GRB.imx, synth_GRB.imy = imx, imy
 	synth_GRB.z = z_p
 
-
 	# Apply distance corrections to GRB light curve and spectrum
 	synth_GRB.move_to_new_frame(z_o=template_grb.z, z_p=z_p)
 
@@ -71,8 +70,7 @@ def simulate_observation(template_grb, imx, imy, ndets,
 		# Calculate the fraction of the quadrant exposure 
 
 	# Add background to light curve 
-	time_bin_size = synth_GRB.light_curve['TIME'][1] - synth_GRB.light_curve['TIME'][0]
-	bgd_rate = bgd_rate_per_det * ndets * rate_in_band * time_bin_size # counts / sec
+	bgd_rate = bgd_rate_per_det * ndets # counts / sec
 	synth_GRB.light_curve['RATE'] += bgd_rate # counts / sec
 
 	# Apply fluctuations 
@@ -118,3 +116,4 @@ def apply_mask_weighting(light_curve,imx,imy,ndets,bgd_rate):
 	light_curve['RATE'] = (light_curve["RATE"] - bgd_rate)/correction # background-subtracted counts / sec / dets
 
 	return light_curve
+

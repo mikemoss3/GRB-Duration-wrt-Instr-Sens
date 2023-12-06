@@ -331,7 +331,7 @@ class GRB(object):
 				curr_flux_to_distribute = self.light_curve['RATE'][i]
 				curr_flux_unc_to_distribute = self.light_curve['UNC'][i]
 
-				# Find the indices of z_p light curve where the time axis encompasses curr_time_bin*(1+z_p)/(1+z_o) and (1+curr_time_bin)*(1+z_p)/(1+z_o)
+				# Find the indices of z_p light curve where the time axis encompasses curr_time_bin*(1+z_p)/(1+z_o) and (curr_time_bin+time_bin_size)*(1+z_p)/(1+z_o)
 				argstart = np.argmax(tmp_light_curve['TIME']>=curr_time_bin*(1+z_p)/(1+z_o))
 				argend = np.argmax(tmp_light_curve['TIME']>=(curr_time_bin+bin_size)*(1+z_p)/(1+z_o))
 
@@ -345,7 +345,8 @@ class GRB(object):
 
 				# For the bins between (argstart:argend) assign the flux value of curr_flux_to_distribute/num_new_time_bins
 				tmp_light_curve['RATE'][argstart:argend] = tmp_light_curve['RATE'][argstart:argend] + np.ones(shape=num_new_time_bins)*(curr_flux_to_distribute/num_new_time_bins)
-				tmp_light_curve['UNC'][argstart:argend] = tmp_light_curve['UNC'][argstart:argend] + np.ones(shape=num_new_time_bins)*(curr_flux_unc_to_distribute/num_new_time_bins)
+				# tmp_light_curve['UNC'][argstart:argend] = tmp_light_curve['UNC'][argstart:argend] + np.ones(shape=num_new_time_bins)*(curr_flux_unc_to_distribute/num_new_time_bins)
+				tmp_light_curve['UNC'][argstart:argend] = np.sqrt(tmp_light_curve['UNC'][argstart:argend]**2 + curr_flux_unc_to_distribute**2)
 
 		# Set the light curve to the distance corrected light curve
 		self.light_curve = tmp_light_curve

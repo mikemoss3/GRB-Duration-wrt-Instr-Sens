@@ -59,6 +59,7 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 	if keep_synth_grbs is True:
 		synth_grb_arr = np.zeros(shape=len(param_list),dtype=GRB)
 
+
 	# Simulate an observation for each parameter combination
 	for i in range(len(param_list)):
 
@@ -83,7 +84,7 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 			 
 			# Load in a number of pools to run the code.
 			with mp.Pool(num_cores) as pool:
-				synth_GRBs = pool.starmap(simulate_observation, [(template_grb, param_list[i][1], param_list[i][2], param_list[i][3], None, param_list[i][0], sim_triggers, ndet_max, t) for t in range(trials)])
+				synth_GRBs = pool.starmap(simulate_observation, [(template_grb, param_list[i][1], param_list[i][2], param_list[i][3], None, param_list[i][0], sim_triggers, ndet_max, bgd_rate_per_det) for t in range(trials)])
 
 			# Add the new results to the list of sim results
 			for k in range(trials):
@@ -111,6 +112,9 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 		return sim_results, synth_grb_arr
 	else:
 		return sim_results
+
+def test(a,b):
+	return a+b
 
 def make_param_list(z_arr, imx_arr, imy_arr, ndets_arr):
 	"""
@@ -154,3 +158,4 @@ def make_ave_sim_res(sim_results):
 		ave_sim_results["FLUENCE"][i] = np.sum(sim_results["FLUENCE"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
 
 	return ave_sim_results
+
