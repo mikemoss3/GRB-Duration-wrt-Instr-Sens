@@ -1,0 +1,8 @@
+z = 0.1254
+fn = "data-files/template-light-curves/grb_060614_1chan_64ms.lc"
+t_true = 109.104 # true T90
+tmin = -20
+tmax = 210
+alpha = -2.33
+ep = 134.112
+norm = 9.47830E-03
