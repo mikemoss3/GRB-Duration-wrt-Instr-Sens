@@ -247,6 +247,7 @@ class GRB(object):
 		rm_bgd_sig : bool
 			Indicates whether or not to remove the background signal outside the T100 range should be removed. 
 		"""
+
 		if z_o == z_p:
 			# No chage in the light curve or spectrum.
 			return;
