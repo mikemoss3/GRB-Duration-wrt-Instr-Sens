@@ -69,7 +69,7 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 
 				sim_results[["z", "imx", "imy", "ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
-				# Load Swift BAT response based on position on detector plane  
+				# Load Swift BAT response based on position on detector plane 
 				resp_mat.load_SwiftBAT_resp(sim_results[sim_result_ind]["imx"],sim_results[sim_result_ind]["imy"])
 
 				synth_GRB = simulate_observation(template_grb=template_grb,z_p=param_list[i][0],imx=param_list[i][1],imy=param_list[i][2],ndets=param_list[i][3],resp_mat=resp_mat,sim_triggers=sim_triggers,ndet_max=ndet_max,bgd_rate_per_det=bgd_rate_per_det)

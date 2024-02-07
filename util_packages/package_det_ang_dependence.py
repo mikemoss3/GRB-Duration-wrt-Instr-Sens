@@ -5,15 +5,9 @@ def find_grid_id(imx,imy):
 	"""
 	Method to find the Swift/BAT response matrix GridID based on the position of the source on the detector plane according to Lien et al 2012.
 	"""
-
-	# Load table of GridIDs and imx,imy positions
-	gridnum_imx_imy = np.genfromtxt("./util_packages/files-det-ang-dependence/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imy",float),("theta",float)])
+	gridnum_imx_imy = np.genfromtxt("./util_packages/files-det-ang-dependence/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imxmin",float),("imxmax",float),("imymin",float),("imymax",float),("thetacenter",float)])
 	# Based on imx and imy, determine which grid number to use
-	imx_list_cut1 = np.argwhere(gridnum_imx_imy['imx']<=imx+0.25).T[0]
-	imx_list_cut2 = np.argwhere(gridnum_imx_imy['imx'][imx_list_cut1]>=imx-0.25).T[0]
-	imy_list_cut1 = np.argwhere(gridnum_imx_imy['imy'][imx_list_cut1][imx_list_cut2] <= imy+0.17).T[0]
-	imy_list_cut2 = np.argwhere(gridnum_imx_imy['imy'][imx_list_cut1][imx_list_cut2][imy_list_cut1] >= imy-0.17).T[0]
-	gridid = gridnum_imx_imy['GRIDID'][imx_list_cut1][imx_list_cut2][imy_list_cut1][imy_list_cut2][0]
+	gridid = gridnum_imx_imy['GRIDID'][(imx>=gridnum_imx_imy['imxmin']) & (imx<=gridnum_imx_imy['imxmax']) & (imy>=gridnum_imx_imy['imymin']) & (imy<=gridnum_imx_imy['imymax'])][0]
 
 	return gridid
 

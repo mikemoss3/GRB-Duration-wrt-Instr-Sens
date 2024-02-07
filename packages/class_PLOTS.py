@@ -114,7 +114,7 @@ class PLOTS(object):
 
 		self.plot_aesthetics(ax)
 
-	def dur_vs_param(self,obs_param,t_true=None,dur_frac=False,ax=None,marker=".",**kwargs):
+	def dur_vs_param(self,obs_param,dur_frac=False,ax=None,marker=".",**kwargs):
 		"""
 		Method to plot duration vs observing parameter (e.g., redshift, pcode, ndets)
 
@@ -144,12 +144,6 @@ class PLOTS(object):
 
 		ax.scatter(sim_results[obs_param],sim_results['DURATION'],marker=marker,**kwargs)
 
-		if (t_true is not None):
-			if (dur_frac is False):
-				ax.axhline(y=t_true,color="C2",linestyle="dashed",alpha=0.5,label="True Duration")
-			else:
-				ax.axhline(y=1,color="C2",linestyle="dashed",alpha=0.5,label="True Duration")
-
 		ax.set_xlabel("{}".format(obs_param),fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 
@@ -169,10 +163,10 @@ class PLOTS(object):
 		"""
 
 		if ax is None:
-			ax = plt.figure().gca()
+			ax = plt.figure(figsize=(3*3.5, 3*1.5)).gca()
 		fig = plt.gcf()
 
-		im = ax.scatter(self.sim_results['imx'],self.sim_results['imy'],c=self.sim_results['DURATION'],cmap='viridis',**kwargs)
+		im = ax.scatter(self.sim_results['imx'],self.sim_results['imy'],c=self.sim_results['DURATION'],cmap='viridis', marker='s', **kwargs)
 		cbar = fig.colorbar(im)
 
 		ax.axhline(y=0,color="k",alpha=0.2)
@@ -208,12 +202,12 @@ class PLOTS(object):
 		if hasattr(grbs,'__len__'):
 			for i in range(len(grbs)):
 				if labels is None:
-					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE']*grbs[i].dt,yerr=grbs[i].light_curve['UNC']*grbs[i].dt,fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
+					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
 				else:
-					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE']*grbs[i].dt,yerr=grbs[i].light_curve['UNC']*grbs[i].dt,fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
+					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
 		# For a single GRB
 		else:
-			ax.errorbar(x=grbs.light_curve['TIME'],y=grbs.light_curve['RATE']*grbs.dt,yerr=grbs.light_curve['UNC']*grbs.dt,fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)
+			ax.errorbar(x=grbs.light_curve['TIME'],y=grbs.light_curve['RATE'],yerr=grbs.light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)
 
 		ax.set_xlabel("Time (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)
@@ -277,4 +271,56 @@ class PLOTS(object):
 		if labels is not None:
 			ax.legend(fontsize=self.fontsize-2)
 
+		self.plot_aesthetics(ax)
+
+	def redshift_evo(self, ax=None, t_true=None, dur_frac=False, bins = None, **kwargs):
+		"""
+		Method to plot the average duration percentage as a function of the position on the detector plane
+
+		Attributes:
+		----------
+		ax : matplotlib.axes
+			Axis on which to create the figure
+		"""
+
+		if ax is None:
+			ax = plt.figure().gca()
+		fig = plt.gcf()
+
+		results = self.sim_results[self.sim_results['DURATION'] > 0]
+
+
+		z_min, z_max = np.min(self.sim_results['z']), np.max(self.sim_results['z'])
+		# t_max = np.max(self.sim_results['DURATION'])
+		t_max = t_true*2
+		if bins is None:
+			bins = int((z_max - z_min)/10)
+
+
+		cmap = plt.cm.get_cmap("viridis").copy()
+		cmap.set_bad(color="w")
+
+		if dur_frac is False:
+			im = ax.hist2d(results['z'], results["DURATION"], range= [[0, z_max*1.1], [0, t_max]], bins=50, cmin=1e-20, cmap=cmap, **kwargs)
+		else:
+			im = ax.hist2d(results['z'], results["DURATION"]/t_max, range= [[0, z_max*1.1], [0, 1]], bins=50, cmin=1e-20, cmap=cmap, **kwargs)
+
+		if (t_true is not None):
+			if (dur_frac is False):
+				ax.axhline(y=t_true,color="C1",linestyle="dashed", alpha=0.5, label="True Duration")
+			else:
+				ax.axhline(y=1,color="C1",linestyle="dashed",alpha=0.5,label="True Duration")
+
+		ax.axvline(x=z_min,color="r",linestyle="dashed",alpha=0.5,label="Measured Redshift")
+		ax.axvline(x=z_max,color="r",linestyle="dashed",alpha=0.5,label="Max. Simulated Redshift")
+
+		ax.set_xlim(0,z_max*1.1)
+		ax.set_ylim(0)
+
+		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		fig.tight_layout()
 		self.plot_aesthetics(ax)
