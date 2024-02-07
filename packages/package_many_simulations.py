@@ -156,3 +156,16 @@ def make_ave_sim_res(sim_results):
 
 	return ave_sim_results
 
+def save_sim_results(fname, sim_results):
+	"""
+	Method to make an average sim_results array for each unique parameter combination
+
+	Attributes:
+	----------
+	fname : string
+		file name to save array to
+	sim_results : np.ndarray
+		sim_results array 
+	"""
+
+	np.save(fname, sim_results)

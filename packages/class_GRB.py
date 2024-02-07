@@ -163,7 +163,7 @@ class GRB(object):
 			
 			return 0;
 
-	def make_spectrum(self,emin,emax,num_bins = None,spec_num=None):
+	def make_spectrum(self, emin, emax, num_bins = None, spec_num=None):
 		"""
 		Method to evaluate the spectrum over the defined energy interval using the GRB object's spectral model and parameters
 

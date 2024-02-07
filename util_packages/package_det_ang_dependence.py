@@ -7,7 +7,10 @@ def find_grid_id(imx,imy):
 	"""
 	gridnum_imx_imy = np.genfromtxt("./util_packages/files-det-ang-dependence/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imxmin",float),("imxmax",float),("imymin",float),("imymax",float),("thetacenter",float)])
 	# Based on imx and imy, determine which grid number to use
-	gridid = gridnum_imx_imy['GRIDID'][(imx>=gridnum_imx_imy['imxmin']) & (imx<=gridnum_imx_imy['imxmax']) & (imy>=gridnum_imx_imy['imymin']) & (imy<=gridnum_imx_imy['imymax'])][0]
+	try:
+		gridid = gridnum_imx_imy['GRIDID'][(imx>=gridnum_imx_imy['imxmin']) & (imx<=gridnum_imx_imy['imxmax']) & (imy>=gridnum_imx_imy['imymin']) & (imy<=gridnum_imx_imy['imymax'])][0]
+	except:
+		gridid = "17"
 
 	return gridid
 
