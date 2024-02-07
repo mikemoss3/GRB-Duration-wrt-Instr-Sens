@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 from packages.class_GRB import GRB
 from packages.class_PLOTS import PLOTS
 from packages.class_SPECFUNC import PL, CPL
-from packages.package_analysis import many_simulations, make_param_list
+from packages.package_analysis import many_simulations, make_param_list, make_ave_sim_res
 
 
 def main():
@@ -25,7 +25,7 @@ def main():
 	tmax = 170
 	alpha = -0.465417
 	ep = 100.872
-	norm = 0.03 # counts cm−2 s^−1 keV^−1
+	norm = 0.01 # counts cm−2 s^−1 keV^−1
 
 	# Make a GRB object
 	template_grb = GRB(z=z)
@@ -39,35 +39,36 @@ def main():
 
 
 	# Simulate many observations 
-	# z_arr = np.array([z])
-	z_arr = np.linspace(z, 8, num=3)
+	z_arr = np.array([z])
+	# z_arr = np.linspace(z, 8, num=3)
 
-	imx_arr = np.array([0])
-	imy_arr = np.array([0])
+	# imx_arr = np.array([0])
+	# imy_arr = np.array([0])
 
-	# imx_arr = np.linspace(-1.25,1.25,30)
-	# imy_arr = np.linspace(-0.875,0.875,30)
+	imx_arr = np.linspace(-1.25,1.25,20)
+	imy_arr = np.linspace(-0.875,0.875,20)
 
-	ndets_arr = np.array([30000])
+	ndets_arr = np.array([20000])
 
 	param_list = make_param_list(z_arr,imx_arr,imy_arr,ndets_arr)
-	trials = 4
+	trials = 6
 
-	sim_results = many_simulations(template_grb, param_list, trials, multiproc=False, ret_ave=False, keep_synth_grbs=False, bgd_rate_per_det=0.6)
-
+	sim_results = many_simulations(template_grb, param_list, trials, multiproc=True, ret_ave=False, keep_synth_grbs=False, bgd_rate_per_det=0.5)
+	ave_sim_results = make_ave_sim_res(sim_results)
 
 	# print(sim_results)
+	# print(ave_sim_results)
 
 	template_grb.light_curve['RATE'] *= 0.16
-
 
 
 	plots = PLOTS(sim_results)
 	# plots.plot_light_curves(template_grb)
 	# plots.plot_light_curves(grbs=np.append(template_grb,grbs),t_window=[tmin,tmax])
 	# plots.dur_vs_param(obs_param="z")
-	# plots.det_plane_map()
-	plots.redshift_evo(t_true=t_true)
+	# plots.redshift_evo(t_true=t_true)
+	plots = PLOTS(ave_sim_results)
+	plots.det_plane_map()
 	plt.show()
 
 	# plt.savefig("data-files/figs/2023-11-06/2023-11-06-grb-211211A-redshift-vs-dur-evo.png")

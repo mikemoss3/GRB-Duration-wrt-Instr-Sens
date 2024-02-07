@@ -113,9 +113,6 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 	else:
 		return sim_results
 
-def test(a,b):
-	return a+b
-
 def make_param_list(z_arr, imx_arr, imy_arr, ndets_arr):
 	"""
 	Method to make a list of all parameter combinations from the given parameter values.

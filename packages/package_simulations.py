@@ -48,13 +48,6 @@ def simulate_observation(template_grb, imx, imy, ndets,
 	# Apply distance corrections to GRB light curve and spectrum
 	synth_GRB.move_to_new_frame(z_o=template_grb.z, z_p=z_p)
 
-
-	# synth_GRB.light_curve['RATE'][synth_GRB.light_curve['TIME']<-5] *=0
-	# synth_GRB.light_curve['RATE'][synth_GRB.light_curve['TIME']>15] *=0
-
-	# synth_GRB.light_curve['RATE'][(synth_GRB.light_curve['TIME'] < 0 ) | (synth_GRB.light_curve['TIME'] > 10)] *=0
-
-
 	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
@@ -85,7 +78,6 @@ def simulate_observation(template_grb, imx, imy, ndets,
 
 	# Add background to light curve 
 	bgd_rate = bgd_rate_per_det * ndets / synth_GRB.dt  # counts / sec
-	# print(bgd_rate)
 	synth_GRB.light_curve['RATE'] += bgd_rate # counts / sec
 
 	# Apply fluctuations 

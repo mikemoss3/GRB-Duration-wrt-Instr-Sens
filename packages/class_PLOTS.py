@@ -166,11 +166,16 @@ class PLOTS(object):
 			ax = plt.figure(figsize=(3*3.5, 3*1.5)).gca()
 		fig = plt.gcf()
 
-		im = ax.scatter(self.sim_results['imx'],self.sim_results['imy'],c=self.sim_results['DURATION'],cmap='viridis', marker='s', **kwargs)
-		cbar = fig.colorbar(im)
-
 		ax.axhline(y=0,color="k",alpha=0.2)
 		ax.axvline(x=0,color="k",alpha=0.2)
+
+		cmap = plt.cm.get_cmap("viridis").copy()
+		# cmap.set_bad(color="gray")
+		cmap.set_under(color="gray")
+		cmin = np.min(self.sim_results['DURATION'][self.sim_results['DURATION']>0])
+
+		im = ax.scatter(self.sim_results['imx'],self.sim_results['imy'],c=self.sim_results['DURATION'],cmap=cmap, vmin=cmin, marker='s', **kwargs)
+		cbar = fig.colorbar(im)
 
 		ax.set_xlim(-imx_max,imx_max)
 		ax.set_ylim(-imy_max,imy_max)
