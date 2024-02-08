@@ -228,6 +228,48 @@ class GRB(object):
 			self.T100_dur = T100_dur
 		if T100_start is not None:
 			self.T100_start = T100_start
+	
+	def cut_light_curve(self, tmin=None, tmax=None):
+		"""
+		Method to cut light curve to only the selected interval. 
+		If tmin (tmax) is left as None, the beginning (end) of the light curve is assumed.
+
+		Attributes:
+		-----------
+		tmin : float
+			The minimum time of the interval to be removed. 
+		tmax : float
+			The maximum time of the interval to be removed. 
+		"""
+
+		if tmin is None:
+			tmin = self.light_curve['TIME'][0]
+		if tmax is None:
+			tmax = self.light_curve['TIME'][-1]
+
+		self.light_curve = self.light_curve[np.argmax(tmin <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= tmax)]
+
+	def zero_light_curve_selection(self, tmin=None, tmax=None):
+		"""
+		Method to set the counts (and uncertainty) within the selected interval of the light curve to zero. 
+		If tmin (tmax) is left as None, the beginning (end) of the light curve is assumed.
+
+		Attributes:
+		-----------
+		tmin : float
+			The minimum time of the interval to be removed. 
+		tmax : float
+			The maximum time of the interval to be removed. 
+		"""
+
+		if tmin is None:
+			tmin = self.light_curve['TIME'][0]
+		if tmax is None:
+			tmax = self.light_curve['TIME'][-1]
+
+		self.light_curve['RATE'][np.argmax(tmin <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= tmax)] *= 0
+		self.light_curve['UNC'][np.argmax(tmin <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= tmax)] *= 0
+
 
 	def move_to_new_frame(self, z_o, z_p, emin=gc.bol_lum[0],emax=gc.bol_lum[1],rm_bgd_sig=False):
 		"""

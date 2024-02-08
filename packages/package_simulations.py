@@ -44,7 +44,6 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat,
 	synth_GRB.imx, synth_GRB.imy = imx, imy
 	synth_GRB.z = z_p
 
-
 	# Apply distance corrections to GRB light curve and spectrum
 	synth_GRB.move_to_new_frame(z_o=template_grb.z, z_p=z_p)
 

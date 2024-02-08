@@ -157,7 +157,7 @@ class ResponseMatrix(object):
 			self.ECHAN_HI[i] = ebounds_data[i][2] # Instrument energy channel upper bound
 			self.ECHAN_MID[i] = (self.ECHAN_LO[i]+self.ECHAN_HI[i])/2 # Instrument energy channel center
 
-	def load_SwiftBAT_resp(self,imx,imy):
+	def load_SwiftBAT_resp(self, imx, imy):
 		"""
 		Method to load an (averaged) Swift/BAT response matrix given the position of the source on the detector plane.
 		"""
