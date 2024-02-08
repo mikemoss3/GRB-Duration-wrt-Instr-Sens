@@ -10,7 +10,7 @@ def find_grid_id(imx,imy):
 	try:
 		gridid = gridnum_imx_imy['GRIDID'][(imx>=gridnum_imx_imy['imxmin']) & (imx<=gridnum_imx_imy['imxmax']) & (imy>=gridnum_imx_imy['imymin']) & (imy<=gridnum_imx_imy['imymax'])][0]
 	except:
-		gridid = "17"
+		gridid = None
 
 	return gridid
 

@@ -18,16 +18,24 @@ class ResponseMatrix(object):
 	"""
 	Response matrix class
 	"""
-	def __init__(self,E_phot_min=1,E_phot_max=500,num_phot_bins=200,E_chan_min=1,E_chan_max=200,num_chans=80):
+	def __init__(self,E_phot_min=1, E_phot_max=10, num_phot_bins=10, E_chan_min=1, E_chan_max=10,num_chans=10):
 		"""
 		RSP class initialization 
+		
 		Attributes:
-		E_phot_min = 0, minimum photon energy, keV 
-		E_phot_max = 500, maximum photon energy, keV
-		num_phot_bins = 200, number of bins along the photon energy axis
-		E_chan_min = 0, minimum channel energy, keV
-		E_chan_max = 200, maximum channel energy, keV
-		num_chans = 80, number of instrument channels 
+		-----------
+		E_phot_min : float
+			Minimum photon energy, keV 
+		E_phot_max : float
+			Maximum photon energy, keV
+		num_phot_bins : int
+			Number of bins along the photon energy axis
+		E_chan_min : float 
+			Minimum channel energy, keV
+		E_chan_max : float
+			Maximum channel energy, keV
+		num_chans : int
+			Number of instrument channels 
 		"""
 
 		self.num_phot_bins = num_phot_bins
@@ -89,7 +97,7 @@ class ResponseMatrix(object):
 
 	def make_empty_resp(self):
 		""" If the shape of the response matrix is changed, the response matrix is reset to zeros."""
-		self.MATRIX = np.zeros(shape=(self.num_phot_bins,self.num_chans))
+		self.MATRIX = np.zeros(shape=(self.num_phot_bins, self.num_chans))
 
 	def identity(self):
 		""" Make identity matrix """
@@ -157,8 +165,11 @@ class ResponseMatrix(object):
 		# Obtain GridID
 		gridid = find_grid_id(imx,imy)
 
-		# Load corresponding response matrix
-		self.load_rsp_from_file(file_name = "./util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(gridid))
+		if gridid is None:
+			self.make_empty_resp()
+		else:
+			# Load corresponding response matrix
+			self.load_rsp_from_file(file_name = "./util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(gridid))
 
 
 	def plot_heatmap(self,ax=None,E_phot_bounds=None,E_chan_bounds=None):

@@ -12,8 +12,8 @@ from packages.class_RSP import ResponseMatrix
 from util_packages.package_det_ang_dependence import find_pcode, find_inc_ang, fraction_correction
 
 
-def simulate_observation(template_grb, imx, imy, ndets, 
-	resp_mat=None, z_p=0, sim_triggers=False,
+def simulate_observation(template_grb, imx, imy, ndets, resp_mat,
+	z_p=0, sim_triggers=False,
 	ndet_max=32768, bgd_rate_per_det=0.3, area_per_det = 0.16, band_rate_min=15,band_rate_max=350):
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
@@ -50,11 +50,6 @@ def simulate_observation(template_grb, imx, imy, ndets,
 
 	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
-
-	# Fold GRB through instrument response (RSP selected based on position on the detector plane)
-	if resp_mat is None:
-		resp_mat = ResponseMatrix()
-		resp_mat.load_SwiftBAT_resp(imx,imy)
 
 
 	folded_spec = resp_mat.fold_spec(synth_GRB.specfunc)  # counts / sec / keV (/cm^2?)

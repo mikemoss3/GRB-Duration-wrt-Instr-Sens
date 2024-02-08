@@ -45,13 +45,13 @@ def main():
 	imx_arr = np.array([0])
 	imy_arr = np.array([0])
 
-	imx_arr = np.linspace(-1.75,1.75,20)
-	imy_arr = np.linspace(-0.875,0.875,20)
+	imx_arr = np.linspace(-1.75,1.75,10)
+	imy_arr = np.linspace(-0.875,0.875,10)
 
 	ndets_arr = np.array([20000])
 
 	param_list = make_param_list(z_arr,imx_arr,imy_arr,ndets_arr)
-	trials = 1
+	trials = 4
 
 	sim_results, grbs = many_simulations(template_grb, param_list, trials, multiproc=False, ret_ave=False, keep_synth_grbs=True, bgd_rate_per_det=0.5)
 	ave_sim_results = make_ave_sim_res(sim_results)

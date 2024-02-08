@@ -53,24 +53,23 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 	sim_results = np.zeros(shape=int(len(param_list)*trials),dtype=dt_sim_res)
 	sim_result_ind = 0
 
-	# Make a Response Matrix object
-	resp_mat = ResponseMatrix()
-
 	if keep_synth_grbs is True:
 		synth_grb_arr = np.zeros(shape=len(param_list),dtype=GRB)
 
-
 	# Simulate an observation for each parameter combination
-	for i in range(len(param_list)):
-
-		if multiproc is False:
-			# Run the simulations without multiprocessing 
+	if multiproc is False:
+		# Run the simulations without multiprocessing 
+	
+		# Make a Response Matrix object
+		resp_mat = ResponseMatrix()
+	
+		for i in range(len(param_list)):
 			for j in range(trials):
 
 				sim_results[["z", "imx", "imy", "ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
 				# Load Swift BAT response based on position on detector plane 
-				resp_mat.load_SwiftBAT_resp(sim_results[sim_result_ind]["imx"],sim_results[sim_result_ind]["imy"])
+				resp_mat.load_SwiftBAT_resp(sim_results[sim_result_ind]["imx"], sim_results[sim_result_ind]["imy"])
 
 				synth_GRB = simulate_observation(template_grb=template_grb,z_p=param_list[i][0],imx=param_list[i][1],imy=param_list[i][2],ndets=param_list[i][3],resp_mat=resp_mat,sim_triggers=sim_triggers,ndet_max=ndet_max,bgd_rate_per_det=bgd_rate_per_det)
 				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_GRB, dur_per=dur_per) # Find the Duration and the fluence 
@@ -79,12 +78,18 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 				sim_result_ind +=1
 			if keep_synth_grbs is True:
 				synth_grb_arr[i] = synth_GRB
-		else:
-			# Run the simulations with multiprocessing
-			 
+	else:
+		# Run the simulations with multiprocessing
+		for i in range(len(param_list)):
+
+			resp_mat_list = np.zeros(shape=trials, dtype=ResponseMatrix)
+			for j in range(trials):
+				resp_mat_list[j] = ResponseMatrix()
+				resp_mat_list[j].load_SwiftBAT_resp(sim_results[i]["imx"], sim_results[i]["imy"])
+
 			# Load in a number of pools to run the code.
 			with mp.Pool(num_cores) as pool:
-				synth_GRBs = pool.starmap(simulate_observation, [(template_grb, param_list[i][1], param_list[i][2], param_list[i][3], None, param_list[i][0], sim_triggers, ndet_max, bgd_rate_per_det) for t in range(trials)])
+				synth_GRBs = pool.starmap(simulate_observation, [(template_grb, param_list[i][1], param_list[i][2], param_list[i][3], resp_mat_list[t], param_list[i][0], sim_triggers, ndet_max, bgd_rate_per_det) for t in range(trials)])
 
 			# Add the new results to the list of sim results
 			for k in range(trials):
