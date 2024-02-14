@@ -50,7 +50,6 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat,
 	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
-
 	folded_spec = resp_mat.fold_spec(synth_GRB.specfunc)  # counts / sec / keV (/cm^2?)
 	rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec  (/cm^2?)
 

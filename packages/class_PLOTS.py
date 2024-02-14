@@ -174,9 +174,15 @@ class PLOTS(object):
 			x_divs = [-1.75, -1.25, -0.75, -0.25, 0.25, 0.75, 1.25, 1.75]
 			y_divs = [-0.875, -0.525, -0.175, 0.175, 0.525, 0.875]
 
-			for i in range(len(x_divs)):
+			ax.plot([x_divs[0], x_divs[0]], [y_divs[1], y_divs[-2]], color="k", alpha=0.2)
+			ax.plot([x_divs[-1], x_divs[-1]], [y_divs[1], y_divs[-2]], color="k", alpha=0.2)
+
+			ax.plot([x_divs[1], x_divs[-2]], [y_divs[0], y_divs[0]], color="k", alpha=0.2)
+			ax.plot([x_divs[1], x_divs[-2]], [y_divs[-1], y_divs[-1]], color="k", alpha=0.2)
+
+			for i in range(1,len(x_divs)-1):
 				ax.plot([x_divs[i], x_divs[i]], [y_divs[0], y_divs[-1]], color="k", alpha=0.2)
-			for i in range(len(y_divs)):
+			for i in range(1,len(y_divs)-1):
 				ax.plot([x_divs[0], x_divs[-1]], [y_divs[i], y_divs[i]], color="k", alpha=0.2)
 
 		cmap = plt.cm.get_cmap("viridis").copy()
@@ -194,17 +200,15 @@ class PLOTS(object):
 		ax.set_ylabel("IMY",fontsize=self.fontsize,fontweight=self.fontweight)
 
 		cbar.set_label("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
-
-
-
+		cbar.ax.axhline(2, c='w')
 			
 
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_evo(self, sim_results, ax=None, t_true=None, dur_frac=False, bins = None, **kwargs):
+	def redshift_evo(self, sim_results, ax=None, t_true=None, t_max=None, dur_frac=False, bins = None, **kwargs):
 		"""
-		Method to plot the average duration percentage as a function of the position on the detector plane
+		Method to plot the measured duration of each synthetic light curve as a function redshift
 
 		Attributes:
 		----------
@@ -220,19 +224,21 @@ class PLOTS(object):
 
 
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
-		# t_max = np.max(self.sim_results['DURATION'])
-		t_max = t_true*2
+		if t_max is None:
+			t_max = np.max(sim_results['DURATION'])
 		if bins is None:
 			bins = int((z_max - z_min)/10)
 
 
 		cmap = plt.cm.get_cmap("viridis").copy()
 		cmap.set_bad(color="w")
+		cmin=1e-20
+		cmin=0
 
 		if dur_frac is False:
-			im = ax.hist2d(results['z'], results["DURATION"], range= [[0, z_max*1.1], [0, t_max]], bins=50, cmin=1e-20, cmap=cmap, **kwargs)
+			im = ax.hist2d(results['z'], results["DURATION"], range= [[0, z_max*1.1], [0, t_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
 		else:
-			im = ax.hist2d(results['z'], results["DURATION"]/t_max, range= [[0, z_max*1.1], [0, 1]], bins=50, cmin=1e-20, cmap=cmap, **kwargs)
+			im = ax.hist2d(results['z'], results["DURATION"]/t_true, range= [[0, z_max*1.1], [0, 1]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
 
 		if (t_true is not None):
 			if (dur_frac is False):

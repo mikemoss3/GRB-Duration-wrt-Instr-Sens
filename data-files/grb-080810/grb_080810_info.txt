@@ -1,0 +1,7 @@
+name = "080810"
+z = 3.3604
+fn = "data-files/grb-080810/grb_080810_1chan_1s.lc"
+t_true = 107.668 # true T90
+alpha = -1.270
+ep = 9999.350
+norm = 3.69e-03 # counts cm−2 s^−1 keV^−1

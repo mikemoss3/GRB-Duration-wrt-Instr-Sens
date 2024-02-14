@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 
 def many_simulations(template_grb, param_list, trials, dur_per = 90, 
 	multiproc=True, num_cores = 4, sim_triggers=False, ndet_max=32768, bgd_rate_per_det=0.3, 
-	out_file_name = None, ret_ave = False, keep_synth_grbs=False):
+	out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
 	"""
 	Method to perform multiple simulations for each combination of input parameters 
 
@@ -48,13 +48,16 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 	out_file_name : string
 		File name of .txt file to write the simulation result out to. 
 	"""
-	
+
 	# Make a list to hold the simulation results
 	sim_results = np.zeros(shape=int(len(param_list)*trials),dtype=dt_sim_res)
 	sim_result_ind = 0
 
 	if keep_synth_grbs is True:
 		synth_grb_arr = np.zeros(shape=len(param_list),dtype=GRB)
+
+	if verbose is True:
+		print("Tot number of param combinations = ", len(param_list))
 
 	# Simulate an observation for each parameter combination
 	if multiproc is False:
@@ -64,7 +67,11 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 		resp_mat = ResponseMatrix()
 	
 		for i in range(len(param_list)):
+			if verbose is True:
+				print("Param combination {}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i, param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
 			for j in range(trials):
+				if verbose is True:
+					print("\t\tTrial ",j)
 
 				sim_results[["z", "imx", "imy", "ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
@@ -78,34 +85,35 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 				sim_result_ind +=1
 			if keep_synth_grbs is True:
 				synth_grb_arr[i] = synth_GRB
+
 	else:
 		# Run the simulations with multiprocessing
 		for i in range(len(param_list)):
+			if verbose is True:
+				print("Param combination {}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i, param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
 
 			resp_mat_list = np.zeros(shape=trials, dtype=ResponseMatrix)
-			for j in range(trials):
-				resp_mat_list[j] = ResponseMatrix()
-				resp_mat_list[j].load_SwiftBAT_resp(sim_results[i]["imx"], sim_results[i]["imy"])
+			for t in range(trials):
+				resp_mat_list[t] = ResponseMatrix()
+				resp_mat_list[t].load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
 
 			# Load in a number of pools to run the code.
 			with mp.Pool(num_cores) as pool:
 				synth_GRBs = pool.starmap(simulate_observation, [(template_grb, param_list[i][1], param_list[i][2], param_list[i][3], resp_mat_list[t], param_list[i][0], sim_triggers, ndet_max, bgd_rate_per_det) for t in range(trials)])
 
 			# Add the new results to the list of sim results
-			for k in range(trials):
+			for t in range(trials):
+				if verbose is True:
+					print("\t\tTrial ",t)
 
 				sim_results[["z","imx","imy","ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
-				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_GRBs[k], dur_per=dur_per) # Find the Duration and the fluence 
+				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_GRBs[t], dur_per=dur_per) # Find the Duration and the fluence 
 				sim_result_ind += 1
-
 
 			if keep_synth_grbs is True:
 				synth_grb_arr[i] = synth_GRBs[0]
 
-						
-			# Increment the index tacking value by the number of trials just simulated
-			# sim_result_ind += trials
 
 	if out_file_name is not None:
 		np.savetxt(out_file_name,sim_results)

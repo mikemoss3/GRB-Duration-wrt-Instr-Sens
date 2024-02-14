@@ -171,7 +171,6 @@ class ResponseMatrix(object):
 			# Load corresponding response matrix
 			self.load_rsp_from_file(file_name = "./util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(gridid))
 
-
 	def plot_heatmap(self,ax=None,E_phot_bounds=None,E_chan_bounds=None):
 		""" Plot heat map of the response matrix """
 
