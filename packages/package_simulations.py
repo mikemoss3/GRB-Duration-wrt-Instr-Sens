@@ -79,6 +79,7 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat,
 	# Apply mask-weighting to light curve (both the rate and uncertainty)
 	synth_GRB.light_curve = apply_mask_weighting(synth_GRB.light_curve, imx, imy, ndets, bgd_rate) # background-subtracted counts / sec / det
 
+
 	return synth_GRB
 
 def band_rate(spectrum,emin,emax):
@@ -104,22 +105,25 @@ def apply_mask_weighting(light_curve, imx, imy, ndets, bgd_rate):
 	stdev_backgroud = np.sqrt(np.mean(light_curve['RATE'][0:20]))
 
 	# From imx and imy, find pcode and the angle of incidence
-	pcode = find_pcode(imx,imy)
+	pcode = find_pcode(imx, imy)
+	angle_inc = find_inc_ang(imx,imy) # rad
+
+	# Total mask-weighting correction
+	correction = np.cos(angle_inc)*pcode*ndets*fraction_correction(imx, imy) # total correction factor
+
 	if pcode == 0:
 		# Source was not in the field of view
 		light_curve['UNC'] *= 0
 		light_curve['RATE'] *=0 # counts / sec / dets
 		return light_curve
 
-	angle_inc = find_inc_ang(imx,imy) # rad
-
-	# Total mask-weighting correction
-	correction = np.cos(angle_inc)*pcode*ndets*fraction_correction(imx, imy) # total correction factor
-
 	# Use error propagation to calculate the uncertainty in the RATE for the mask-weight light curve
 	light_curve['UNC'] = np.sqrt( light_curve['RATE']/np.power(correction,2.)+np.power(stdev_backgroud/correction,2.))
 	# Calculate the mask-weighted RATE column
 	light_curve['RATE'] = (light_curve["RATE"] - bgd_rate)/correction # background-subtracted counts / sec / dets
+
+	np.savetxt("test.txt", light_curve)
+
 
 	return light_curve
 

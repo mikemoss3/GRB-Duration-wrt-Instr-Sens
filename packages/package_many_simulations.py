@@ -68,7 +68,7 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 	
 		for i in range(len(param_list)):
 			if verbose is True:
-				print("Param combination {}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i, param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
+				print("Param combination {}/{}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i+1, len(param_list), param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
 			for j in range(trials):
 				if verbose is True:
 					print("\t\tTrial ",j)
@@ -90,7 +90,7 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 		# Run the simulations with multiprocessing
 		for i in range(len(param_list)):
 			if verbose is True:
-				print("Param combination {}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i, param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
+				print("Param combination {}/{}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i+1, len(param_list), param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
 
 			resp_mat_list = np.zeros(shape=trials, dtype=ResponseMatrix)
 			for t in range(trials):

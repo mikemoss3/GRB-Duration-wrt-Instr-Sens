@@ -56,4 +56,5 @@ def bayesian_t_blocks(grb,dur_per=90,ncp_prior=6):
 		# Set duration information for the GRB object 
 		grb.set_duration(duration, t_start, phot_fluence, dur_per, ncp_prior)
 
+
 	return duration, t_start, phot_fluence

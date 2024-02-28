@@ -75,6 +75,9 @@ class PLOTS(object):
 	def show(self):
 		plt.show()
 
+	def savefig(self, fname):
+		plt.savefig(fname)
+
 	def duration_overlay(self, sim_results, light_curve, order_type=2, ax=None, **kwargs):
 		"""
 		Method to plot simulated duration measures overlayed on template light curve
@@ -167,8 +170,6 @@ class PLOTS(object):
 			ax = plt.figure(figsize=(3*3.5, 3*1.75)).gca()
 		fig = plt.gcf()
 
-		# ax.axhline(y=0,color="k",alpha=0.2)
-		# ax.axvline(x=0,color="k",alpha=0.2)
 
 		if inc_grids is True:
 			x_divs = [-1.75, -1.25, -0.75, -0.25, 0.25, 0.75, 1.25, 1.75]
@@ -185,13 +186,15 @@ class PLOTS(object):
 			for i in range(1,len(y_divs)-1):
 				ax.plot([x_divs[0], x_divs[-1]], [y_divs[i], y_divs[i]], color="k", alpha=0.2)
 
-		cmap = plt.cm.get_cmap("viridis").copy()
-		# cmap.set_bad(color="gray")
-		cmap.set_under(color="gray")
-		cmin = np.min(sim_results['DURATION'][sim_results['DURATION']>0])
 
-		im = ax.scatter(sim_results['imx'],sim_results['imy'],c=sim_results['DURATION'],cmap=cmap, vmin=cmin, marker='s', **kwargs)
+		cmap = plt.cm.get_cmap("viridis").copy()
+		cmap.set_bad(color="gray")
+		cmap.set_under(color="gray")
+		cmin = np.min(1e-9)
+
+		im = ax.scatter(sim_results['imx'],sim_results['imy'],c=sim_results['DURATION'],cmap=cmap, vmin=cmin, marker=',', **kwargs)
 		cbar = fig.colorbar(im)
+
 
 		ax.set_xlim(-imx_max,imx_max)
 		ax.set_ylim(-imy_max,imy_max)
@@ -206,7 +209,7 @@ class PLOTS(object):
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_evo(self, sim_results, ax=None, t_true=None, t_max=None, dur_frac=False, bins = None, **kwargs):
+	def redshift_evo(self, sim_results, ax=None, t_true=None, t_max=None, dur_frac=False, bins = None, log=False, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -222,12 +225,15 @@ class PLOTS(object):
 
 		results = sim_results[sim_results['DURATION'] > 0]
 
-
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
 		if t_max is None:
 			t_max = np.max(sim_results['DURATION'])
 		if bins is None:
 			bins = int((z_max - z_min)/10)
+
+		z_arr = np.linspace(0, z_max*1.1)
+		def dilation_line(z):
+			return t_true*(1+z)/(1+z_min)
 
 
 		cmap = plt.cm.get_cmap("viridis").copy()
@@ -235,25 +241,40 @@ class PLOTS(object):
 		cmin=1e-20
 		cmin=0
 
-		if dur_frac is False:
-			im = ax.hist2d(results['z'], results["DURATION"], range= [[0, z_max*1.1], [0, t_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
-		else:
-			im = ax.hist2d(results['z'], results["DURATION"]/t_true, range= [[0, z_max*1.1], [0, 1]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
+		dur_arr = results["DURATION"]
+		if dur_frac is True:
+			dur_arr /= t_true
+		t_min = 0
+		if log is True:
+			dur_arr = np.log10(dur_arr)
+			t_max = np.log10(t_max)
+			t_min = -1
 
-		if (t_true is not None):
-			if (dur_frac is False):
-				ax.axhline(y=t_true,color="C1",linestyle="dashed", alpha=0.5, label="True Duration")
-			else:
-				ax.axhline(y=1,color="C1",linestyle="dashed",alpha=0.5,label="True Duration")
+		im = ax.hist2d(results['z'], dur_arr, range= [[0, z_max*1.1], [t_min, t_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
+
+		# if (t_true is not None):
+		# 	if (dur_frac is False):
+		# 		ax.axhline(y=t_true,color="C1",linestyle="dashed", alpha=0.5, label="True Duration")
+		# 	else:
+		# 		ax.axhline(y=1,color="C1",linestyle="dashed",alpha=0.5,label="True Duration")
 
 		ax.axvline(x=z_min,color="r",linestyle="dashed",alpha=0.5,label="Measured Redshift")
 		ax.axvline(x=z_max,color="r",linestyle="dashed",alpha=0.5,label="Max. Simulated Redshift")
-
-		ax.set_xlim(0,z_max*1.1)
-		ax.set_ylim(0)
+		# ax.axhline(y=2,color="w",linestyle="dashed",alpha=0.5)
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
-		ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+		if log is False:
+			ax.plot(z_arr, dilation_line(z_arr), color="w", linestyle="dashed", alpha=0.5)
+			ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+			ax.set_ylim(0)
+
+		else:
+			ax.plot(z_arr, np.log10(dilation_line(z_arr)), color="w", linestyle="dashed", alpha=0.5)
+			ax.set_ylabel("log(Duration)",fontsize=self.fontsize,fontweight=self.fontweight)
+			ax.set_ylim(-1)
+
+		ax.set_xlim(0, z_max*1.1)
+
 
 		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
 

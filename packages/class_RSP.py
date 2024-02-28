@@ -95,8 +95,28 @@ class ResponseMatrix(object):
 			print("Response matrix has been reset to zeros.")
 		self.make_empty_resp()
 
-	def make_empty_resp(self):
-		""" If the shape of the response matrix is changed, the response matrix is reset to zeros."""
+	def make_empty_resp(self, num_phot_bins=None, num_chans = None):
+		""" 
+		Create an empty response matrix. 
+		Note: If the shape of the response matrix is changed, the response matrix is reset to zeros.
+		"""
+		if num_phot_bins is not None:
+			self.num_phot_bins = num_phot_bins
+		if num_chans is not None:
+			self.num_chans = num_chans
+
+		self.ENERG_LO = np.zeros(shape=self.num_phot_bins)
+		self.ENERG_HI = np.zeros(shape=self.num_phot_bins)
+		self.ENERG_MID = np.zeros(shape=self.num_phot_bins)
+		self.N_GRP = np.zeros(shape=self.num_phot_bins)
+		self.F_CHAN = np.zeros(shape=self.num_phot_bins)
+		self.N_CHAN = np.zeros(shape=self.num_phot_bins)
+		self.MATRIX = np.zeros(shape=(self.num_phot_bins,self.num_chans) )
+
+		self.ECHAN_LO = np.zeros(shape=self.num_chans)
+		self.ECHAN_HI = np.zeros(shape=self.num_chans)
+		self.ECHAN_MID = np.zeros(shape=self.num_chans)
+
 		self.MATRIX = np.zeros(shape=(self.num_phot_bins, self.num_chans))
 
 	def identity(self):
@@ -159,18 +179,103 @@ class ResponseMatrix(object):
 
 	def load_SwiftBAT_resp(self, imx, imy):
 		"""
-		Method to load an (averaged) Swift/BAT response matrix given the position of the source on the detector plane.
+		Method to load an (interpolated) Swift/BAT response matrix given the position of the source on the detector plane.
 		"""
+		# Error prevention.
+		inft = 1e-10
+		imx+=inft
+		imy+=inft
 
-		# Obtain GridID
-		gridid = find_grid_id(imx,imy)
-
-		if gridid is None:
+		# If the imx, imy is off of the detector plane, we can just return an empty response matrix.
+		gridid_test = find_grid_id(imx, imy)
+		if gridid_test is None:
+			self.num_chans=80
+			self.num_phot_bins=204
 			self.make_empty_resp()
-		else:
-			# Load corresponding response matrix
-			self.load_rsp_from_file(file_name = "./util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(gridid))
+			return;
 
+		# Else, we will need to interpolate a response matrix from the response functions found at the center of the grids 
+		def min_dif(x,y, x0, y0):
+			""" Find the distance between two cartesian points """
+			return np.sqrt((x-x0)**2 + (y-y0)**2)
+
+		# Load information about detector plane
+		imx_imy_info = np.genfromtxt("./util_packages/files-det-ang-dependence/gridnum_imx_imy.txt",dtype=[("GRIDID","U3"),("imx",float),("imxmin",float),("imxmax",float),("imy",float),("imymin",float),("imymax",float),("thetacenter",float),("pcode",float)])
+
+		# Find the grids that surround the point at imx, imy 
+		# Grid IMX's
+		imx_arr = np.unique(imx_imy_info['imx'])
+		# Grid IMY's
+		imy_arr = np.unique(imx_imy_info['imy'])
+
+		closest_imx_ind = None
+		closest_imy_ind = None
+		min_dist = 1e10
+		for i in range(len(imx_arr)):
+			for j in range(len(imy_arr)):
+				curr_dist = min_dif(imx, imy, imx_arr[i], imy_arr[j])
+				if curr_dist < min_dist:
+					min_dist = curr_dist
+					closest_imx_ind, closest_imy_ind = i, j
+
+		# Sign for imx
+		xsign = int((imx - imx_arr[closest_imx_ind])/np.abs(imx - imx_arr[closest_imx_ind]))
+		ysign = int((imy - imy_arr[closest_imy_ind])/np.abs(imy - imy_arr[closest_imy_ind]))
+
+		grid_ids_inds = np.array([
+			(closest_imx_ind, closest_imy_ind),
+			(closest_imx_ind, closest_imy_ind+ysign),
+			(closest_imx_ind+xsign, closest_imy_ind),
+			(closest_imx_ind+xsign, closest_imy_ind+ysign),
+			])
+
+		# Record the GridIDs
+		# If the imx, imy point is beyond the final grid in either the x- or y- direction, 
+		# then an empty response matrix will be used in that direction
+		grid_ids = []
+		for i in range(len(grid_ids_inds)):
+			if (grid_ids_inds[i,0] < 0) or (grid_ids_inds[i,0] >= len(imx_arr)):
+				grid_ids.append(None)
+			elif (grid_ids_inds[i,1] < 0) or (grid_ids_inds[i,1] >= len(imy_arr)):
+				grid_ids.append(None)
+			else:
+				grid_ids.append(find_grid_id(imx_arr[grid_ids_inds[i,0]], imy_arr[grid_ids_inds[i,1]]))
+
+		# Load the four grids response functions. 
+		grid_rsps = np.empty(shape=4, dtype=ResponseMatrix)
+
+		for i in range(len(grid_rsps)):
+			grid_rsps[i] = ResponseMatrix()
+			if grid_ids[i] == None:
+				grid_rsps[i].num_chans=80
+				grid_rsps[i].num_phot_bins=204
+				grid_rsps[i].make_empty_resp()
+			else:
+				grid_rsps[i].load_rsp_from_file(file_name = "./util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_{}.rsp".format(grid_ids[i]))
+
+		# Initialize response matrix for imx, imy
+		self.load_rsp_from_file(file_name = "./util_packages/files-swiftBAT-resp-mats/BAT_alldet_grid_17.rsp")
+		
+		# Find surrounding imx, imy box
+		imx1 = imx_arr[closest_imx_ind]
+		try:
+			imx2 = imx_arr[closest_imx_ind+xsign]
+		except:
+			imx2 = imx1+(0.5*xsign)
+		imy1= imy_arr[closest_imy_ind]
+		try:
+			imy2 = imy_arr[closest_imy_ind+ysign]
+		except:
+			imy2 = imy1+(0.35*ysign)
+
+		# Interpolate four grid response functions to create response at imx, imy
+		norm = (1/(imx2-imx1)/(imy2-imy1))
+		term1 = grid_rsps[0].MATRIX * (imx2 - imx)*(imy2 - imy)
+		term2 = grid_rsps[1].MATRIX * (imx2 - imx)*(imy -  imy1)
+		term3 = grid_rsps[2].MATRIX * (imx - imx1)*(imy2 - imy)
+		term4 = grid_rsps[3].MATRIX * (imx - imx1)*(imy - imy1)
+		self.MATRIX = norm * (term1 + term2 + term3 + term4)
+		
 	def plot_heatmap(self,ax=None,E_phot_bounds=None,E_chan_bounds=None):
 		""" Plot heat map of the response matrix """
 

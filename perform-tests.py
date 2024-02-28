@@ -14,9 +14,20 @@ from packages.class_SPECFUNC import PL, CPL
 from packages.class_RSP import ResponseMatrix
 from packages.class_PLOTS import PLOTS
 
-from util_packages.package_det_ang_dependence import fraction_correction
+from util_packages.package_det_ang_dependence import fraction_correction, find_grid_id, find_pcode
+from packages.package_many_simulations import many_simulations, make_param_list, make_ave_sim_res
 
 
+rsp = ResponseMatrix()
+rsp.load_SwiftBAT_resp(0, 0)
+# rsp.load_SwiftBAT_resp(1.2, .75)
+
+rsp.plot_heatmap()
+# rsp.plot_effarea()
+
+plt.show()
+
+"""
 run_unit_tests = False
 if run_unit_tests is True:
 	import unittest
@@ -38,5 +49,4 @@ if run_unit_tests is True:
 	runner.run(test_bb.suite())
 	runner.run(test_cos.suite())
 	runner.run(test_dad.suite())
-
-
+"""
