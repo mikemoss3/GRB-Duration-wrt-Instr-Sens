@@ -1,0 +1,7 @@
+name = "150314A"
+z = 1.758
+fn = "data-files/grb-150314A/grb_150314A_1chan_64ms.lc"
+t_true = 14.780 # true T90
+alpha = -0.465417
+ep = 248.872
+norm = 0.0262085 # counts cm−2 s^−1 keV^−1

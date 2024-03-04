@@ -1,0 +1,7 @@
+name = "211211A"
+z = 0.076
+fn = "data-files/grb-211211A/grb_211211A_1chan_64ms.lc"
+t_true = 50.712 # true T90
+alpha = -1.442
+ep = 512.674
+norm = 1.35641E-02 # counts cm−2 s^−1 keV^−1

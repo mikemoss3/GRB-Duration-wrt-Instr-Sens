@@ -1,0 +1,7 @@
+name = "180404A"
+z = 1.00
+fn = "data-files/grb-180404A/grb_180404A_1chan_64ms.lc"
+t_true = 36.280 # true T90
+alpha = -1.581
+ep = 202.949
+norm = 1.13e-02 # counts cm−2 s^−1 keV^−1

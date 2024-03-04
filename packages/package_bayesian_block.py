@@ -9,7 +9,8 @@ Defines the Bayesian block method to calculate the duration of a GRB from a supp
 import numpy as np
 from astropy.stats import bayesian_blocks
 
-def bayesian_t_blocks(grb,dur_per=90,ncp_prior=20):
+
+def bayesian_t_blocks(grb,dur_per=90,ncp_prior=6):
 	"""
 	Method to extract the duration and photon fluence of a GRB from a supplied light curve using a Bayesian block method. 
 
@@ -19,7 +20,7 @@ def bayesian_t_blocks(grb,dur_per=90,ncp_prior=20):
 	"""
 
 	# Bin the light curve 
-	bin_edges = bayesian_blocks(t=grb.light_curve['TIME'],x=grb.light_curve['RATE'],sigma=grb.light_curve['UNC'],fitness="measures",ncp_prior=ncp_prior) # Find the T90 and the fluence 
+	bin_edges = bayesian_blocks(t=grb.light_curve['TIME'], x=grb.light_curve['RATE'], sigma=grb.light_curve['UNC'], fitness="measures", ncp_prior=ncp_prior) # Find the T90 and the fluence 
 
 	# Check if any GTI (good time intervals) were found
 	if len(bin_edges) <= 3:
@@ -54,5 +55,6 @@ def bayesian_t_blocks(grb,dur_per=90,ncp_prior=20):
 
 		# Set duration information for the GRB object 
 		grb.set_duration(duration, t_start, phot_fluence, dur_per, ncp_prior)
+
 
 	return duration, t_start, phot_fluence

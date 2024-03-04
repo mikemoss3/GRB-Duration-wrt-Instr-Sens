@@ -1,0 +1,9 @@
+name = "160121A"
+z = 1.960
+fn = "data-files/grb-160121A/grb_160121A_1chan_64ms.lc"
+t_true = 10.500 # true T90
+tmin = -15
+tmax = 20
+alpha = -0.929
+ep = 51.480
+norm = 2.74e-02
