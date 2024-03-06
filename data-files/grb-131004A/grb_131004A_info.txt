@@ -1,7 +1,0 @@
-name = "131004A"
-z = 0.717
-fn = "data-files/grb-131004A/grb_131004A_1chan_64ms.lc"
-t_true = 1.536 # true T90
-alpha = -0.852
-ep = 63.374
-norm = 3.38e-02 # counts cm−2 s^−1 keV^−1
