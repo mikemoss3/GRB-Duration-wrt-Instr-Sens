@@ -1,7 +1,0 @@
-name = "160314A"
-z = 0.726
-fn = "data-files/grb-160314A/grb_160314A_1chan_64ms.lc"
-t_true = 8.732 # true T90
-alpha = -1.530
-ep = 9999.360
-norm = 9.12e-03 # counts cm−2 s^−1 keV^−1

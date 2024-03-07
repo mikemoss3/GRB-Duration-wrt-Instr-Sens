@@ -1,7 +1,0 @@
-name = "110422A"
-z = 1.770
-fn = "data-files/grb-110422A/grb_110422A_1chan_1s.lc"
-t_true = 25.784 # true T90
-alpha = -0.830896
-ep = 147.995
-norm = 0.025 # counts cm−2 s^−1 keV^−1

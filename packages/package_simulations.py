@@ -12,7 +12,7 @@ from packages.class_RSP import ResponseMatrix
 from util_packages.package_det_ang_dependence import find_pcode, find_inc_ang, fraction_correction
 
 
-def simulate_observation(template_grb, imx, imy, ndets, resp_mat,
+def simulate_observation(template_grb, synth_grb, imx, imy, ndets, resp_mat,
 	z_p=0, sim_triggers=False,
 	ndet_max=32768, bgd_rate_per_det=0.3, area_per_det = 0.16, band_rate_min=15,band_rate_max=350):
 	"""
@@ -21,6 +21,8 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat,
 	Attributes:
 	template_grb : GRB 
 		GRB class object that holds the source frame information of the template GRB
+	synth_grb : GRB 
+		GRB class object that will hold the simulated light curve
 	imx, imy : 	float, float 
 		The x and y position of the GRB on the detector plane
 	resp_mat : RSP
@@ -40,47 +42,45 @@ def simulate_observation(template_grb, imx, imy, ndets, resp_mat,
 	"""
 
 	# Initialize synth_GRB
-	synth_GRB = template_grb.copy() # Copies light curve and spectrum
-	synth_GRB.imx, synth_GRB.imy = imx, imy
-	synth_GRB.z = z_p
+	synth_grb.imx, synth_grb.imy = imx, imy
+	synth_grb.z = z_p
 
 	# Apply distance corrections to GRB light curve and spectrum
-	synth_GRB.move_to_new_frame(z_o=template_grb.z, z_p=z_p)
+	synth_grb.move_to_new_frame(z_o=template_grb.z, z_p=z_p)
 
 	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
-	folded_spec = resp_mat.fold_spec(synth_GRB.specfunc)  # counts / sec / keV (/cm^2?)
+	folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / sec / keV (/cm^2?)
 	rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec  (/cm^2?)
 
 	# Using the total count rate from the spectrum and the relative flux level of the light curve, make a new light curve
 	# The synthetic GRB light curve technically has units of counts / sec / cm^2, but we are only using it as a template for relative flux values. 
 	# The actual flux is set by the band rate, which is in units of counts / sec 
-	synth_GRB.light_curve['RATE'] = synth_GRB.light_curve['RATE'] * rate_in_band # counts / sec
-	synth_GRB.light_curve['UNC'] = synth_GRB.light_curve['UNC'] * rate_in_band
+	synth_grb.light_curve['RATE'] = synth_grb.light_curve['RATE'] * rate_in_band # counts / sec
+	synth_grb.light_curve['UNC'] = synth_grb.light_curve['UNC'] * rate_in_band
 
 	# print(np.max(synth_GRB.light_curve['RATE']))
 
 	# This might not be the most ideal place to remove negative counts. 
-	# synth_GRB.light_curve['RATE'][synth_GRB.light_curve['RATE']<0]*=0
-	# synth_GRB.light_curve['UNC'][synth_GRB.light_curve['RATE']<0]*=0
+	# synth_grb.light_curve['RATE'][synth_grb.light_curve['RATE']<0]*=0
+	# synth_grb.light_curve['UNC'][synth_grb.light_curve['RATE']<0]*=0
 
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
 		# Calculate the fraction of the quadrant exposure 
 
 	# Add background to light curve 
-	bgd_rate = bgd_rate_per_det * ndets / synth_GRB.dt  # counts / sec
-	synth_GRB.light_curve['RATE'] += bgd_rate # counts / sec
+	bgd_rate = bgd_rate_per_det * ndets / synth_grb.dt  # counts / sec
+	synth_grb.light_curve['RATE'] += bgd_rate # counts / sec
 
 	# Apply fluctuations 
-	synth_GRB.light_curve['RATE'] = np.random.normal(loc=synth_GRB.light_curve['RATE'], scale=np.sqrt(synth_GRB.light_curve['RATE'])) # counts / sec
+	synth_grb.light_curve['RATE'] = np.random.normal(loc=synth_grb.light_curve['RATE'], scale=np.sqrt(synth_grb.light_curve['RATE'])) # counts / sec
 
 	# Apply mask-weighting to light curve (both the rate and uncertainty)
-	synth_GRB.light_curve = apply_mask_weighting(synth_GRB.light_curve, imx, imy, ndets, bgd_rate) # background-subtracted counts / sec / det
+	synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets, bgd_rate) # background-subtracted counts / sec / det
 
-
-	return synth_GRB
+	return synth_grb
 
 def band_rate(spectrum,emin,emax):
 	"""

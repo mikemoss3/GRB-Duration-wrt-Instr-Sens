@@ -1,7 +1,0 @@
-name = "231117A"
-z = 0.257
-fn = "data-files/grb-231117A/grb_231117A_1chan_64ms.lc"
-t_true = 0.668 # true T90
-alpha = -1.323 
-ep = 165.656
-norm = 1.83e-02 # counts cm−2 s^−1 keV^−1

@@ -56,6 +56,8 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 	if keep_synth_grbs is True:
 		synth_grb_arr = np.zeros(shape=len(param_list),dtype=GRB)
 
+	synth_grb = template_grb.copy() # Copies light curve and spectrum
+
 	if verbose is True:
 		print("Tot number of param combinations = ", len(param_list))
 
@@ -69,22 +71,23 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 		for i in range(len(param_list)):
 			if verbose is True:
 				print("Param combination {}/{}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i+1, len(param_list), param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
+		
+			# Load Swift BAT response based on the IMX, IMY position on the detector plane 
+			resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
+			
 			for j in range(trials):
-				if verbose is True:
-					print("\t\tTrial ",j)
+				# if verbose is True:
+					# print("\t\tTrial ",j)
 
 				sim_results[["z", "imx", "imy", "ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
-				# Load Swift BAT response based on position on detector plane 
-				resp_mat.load_SwiftBAT_resp(sim_results[sim_result_ind]["imx"], sim_results[sim_result_ind]["imy"])
-
-				synth_GRB = simulate_observation(template_grb=template_grb,z_p=param_list[i][0],imx=param_list[i][1],imy=param_list[i][2],ndets=param_list[i][3],resp_mat=resp_mat,sim_triggers=sim_triggers,ndet_max=ndet_max,bgd_rate_per_det=bgd_rate_per_det)
-				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_GRB, dur_per=dur_per) # Find the Duration and the fluence 
+				simulate_observation(template_grb=template_grb, synth_grb = synth_grb, z_p=param_list[i][0],imx=param_list[i][1],imy=param_list[i][2],ndets=param_list[i][3],resp_mat=resp_mat,sim_triggers=sim_triggers,ndet_max=ndet_max,bgd_rate_per_det=bgd_rate_per_det)
+				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_grb, dur_per=dur_per) # Find the Duration and the fluence 
 
 				# Increase simulation index
 				sim_result_ind +=1
 			if keep_synth_grbs is True:
-				synth_grb_arr[i] = synth_GRB
+				synth_grb_arr[i] = synth_grb.copy()
 
 	else:
 		# Run the simulations with multiprocessing
@@ -93,26 +96,30 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 				print("Param combination {}/{}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i+1, len(param_list), param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
 
 			resp_mat_list = np.zeros(shape=trials, dtype=ResponseMatrix)
+			synth_grbs = np.zeros(shape=trials, dtype=GRB)
 			for t in range(trials):
 				resp_mat_list[t] = ResponseMatrix()
 				resp_mat_list[t].load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
 
+				synth_grbs[t] = synth_grb.copy()
+
+
 			# Load in a number of pools to run the code.
 			with mp.Pool(num_cores) as pool:
-				synth_GRBs = pool.starmap(simulate_observation, [(template_grb, param_list[i][1], param_list[i][2], param_list[i][3], resp_mat_list[t], param_list[i][0], sim_triggers, ndet_max, bgd_rate_per_det) for t in range(trials)])
+				pool.starmap(simulate_observation, [(template_grb, synth_grbs[t], param_list[i][1], param_list[i][2], param_list[i][3], resp_mat_list[t], param_list[i][0], sim_triggers, ndet_max, bgd_rate_per_det) for t in range(trials)])
 
 			# Add the new results to the list of sim results
 			for t in range(trials):
-				if verbose is True:
-					print("\t\tTrial ",t)
+				# if verbose is True:
+					# print("\t\tTrial ",t)
 
 				sim_results[["z","imx","imy","ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
-				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_GRBs[t], dur_per=dur_per) # Find the Duration and the fluence 
+				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_grbs[t], dur_per=dur_per) # Find the Duration and the fluence 
 				sim_result_ind += 1
 
 			if keep_synth_grbs is True:
-				synth_grb_arr[i] = synth_GRBs[0]
+				synth_grb_arr[i] = synth_grbs[0]
 
 
 	if out_file_name is not None:

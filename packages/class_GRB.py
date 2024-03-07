@@ -187,7 +187,7 @@ class GRB(object):
 
 		return spectrum
 
-	def load_light_curve(self,file_name,inc_unc = True,t_offset=0,rm_trigtime=False,T100_dur=None,T100_start=None,det_area=None):
+	def load_light_curve(self, file_name, inc_unc = True,t_offset=0,rm_trigtime=False,T100_dur=None,T100_start=None,det_area=None):
 		"""
 		Method to load a light curve from either a .fits or .txt file
 		"""
