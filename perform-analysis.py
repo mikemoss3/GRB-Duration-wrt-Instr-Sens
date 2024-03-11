@@ -9,6 +9,7 @@ Sandbox to perform all simulation, analysis, and plotting commands
 
 import numpy as np 
 import matplotlib.pyplot as plt
+import time
 from datetime import date
 
 from packages.class_GRB import GRB
@@ -44,6 +45,7 @@ def make_param_space(grbp):
 	return param_list
 
 def main(name, template_grb, param_list, trials):
+
 	sim_results = many_simulations(template_grb, param_list, trials, multiproc=False, keep_synth_grbs=False, verbose=True)
 	ave_sim_results = make_ave_sim_res(sim_results)
 
@@ -77,5 +79,10 @@ if __name__ == "__main__":
 	template_grb = make_template_grb(grbp) # Create template GRB
 	param_list = make_param_space(grbp) # Create parameter combination list 
 	trials = 100
+
+	t0 = time.time()
 	main(grbp.name, template_grb, param_list, trials) # Run simulations
+	t1 = time.time()
+	total = t1-t0
+	print(total)
 	# plot(grbp.name, grbp.t_true) # Plot simulation results

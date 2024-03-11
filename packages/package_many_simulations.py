@@ -95,18 +95,19 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 			if verbose is True:
 				print("Param combination {}/{}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i+1, len(param_list), param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
 
-			resp_mat_list = np.zeros(shape=trials, dtype=ResponseMatrix)
+			resp_mat_list = ResponseMatrix()
+			resp_mat_list.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
+
 			synth_grbs = np.zeros(shape=trials, dtype=GRB)
+			# resp_mat_list = np.zeros(shape=trials, dtype=ResponseMatrix)
 			for t in range(trials):
-				resp_mat_list[t] = ResponseMatrix()
-				resp_mat_list[t].load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
-
 				synth_grbs[t] = synth_grb.copy()
-
-
+				# resp_mat_list[t] = ResponseMatrix()
+				# resp_mat_list[t].load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
+			
 			# Load in a number of pools to run the code.
 			with mp.Pool(num_cores) as pool:
-				pool.starmap(simulate_observation, [(template_grb, synth_grbs[t], param_list[i][1], param_list[i][2], param_list[i][3], resp_mat_list[t], param_list[i][0], sim_triggers, ndet_max, bgd_rate_per_det) for t in range(trials)])
+				synth_grbs = pool.starmap(simulate_observation, [(template_grb, synth_grbs[t], param_list[i][1], param_list[i][2], param_list[i][3], resp_mat_list, param_list[i][0], sim_triggers, ndet_max, bgd_rate_per_det) for t in range(trials)])
 
 			# Add the new results to the list of sim results
 			for t in range(trials):

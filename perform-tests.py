@@ -6,6 +6,20 @@ Test running sandbox and unit test runner
 
 """
 
+from astropy.io import fits 
+from packages.package_bayesian_block import custom_bblocks, bayesian_t_blocks
+from packages.class_GRB import GRB
+
+grb= GRB()
+# grb.load_light_curve("data_files/grb_060614/grb_060614_1chan_1s.lc", rm_trigtime=True, det_area=0.16)
+grb.load_light_curve("data_files/grb_211211A/grb_211211A_1chan_1s.lc", rm_trigtime=True, det_area=0.16)
+grb.cut_light_curve(tmin=-100, tmax=250)
+
+# print(bayesian_t_blocks(grb))
+
+duration, fluence = custom_bblocks(grb.light_curve)
+print(duration)
+
 
 """
 run_unit_tests = False

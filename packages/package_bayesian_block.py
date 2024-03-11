@@ -11,7 +11,7 @@ import scipy
 from astropy.stats import bayesian_blocks
 
 
-def bayesian_t_blocks(grb,dur_per=90,ncp_prior=6):
+def bayesian_t_blocks(grb, dur_per=90, ncp_prior=6):
 	"""
 	Method to extract the duration and photon fluence of a GRB from a supplied light curve using a Bayesian block method. 
 
@@ -57,169 +57,122 @@ def bayesian_t_blocks(grb,dur_per=90,ncp_prior=6):
 		# Set duration information for the GRB object 
 		grb.set_duration(duration, t_start, phot_fluence, dur_per, ncp_prior)
 
-	return 0, 0, 0
 
 	return duration, t_start, phot_fluence
 
 
-def custom_bblocks(grb):
+def custom_bblocks(light_curve, ncp_prior=6, coalescefrac = 0.05):
 	"""
 	Bayesian block implementation based on heasoft tool battblocks
 	"""
-	# Bayesian blocks for pure Poisson counting data
-	lc2cells(t, rate, dt, nrows, cellsizes, cellpops, ncells, timedel);
+
+	nlag = 0
+	timedel = light_curve['TIME'][1] - light_curve['TIME'][0]
+	nrows = len(light_curve)
+
+	# Convert light curve to cells with size in units of timebins. 
+	# Since we are using constant time bins, each cell has a size of one
+	cell_curve = np.ones(shape=len(light_curve), dtype=[("size", float),("pop", float)])
+	cell_curve['pop'] = light_curve['RATE'];
 
 	# Retrieve the change points array (i.e. the edges of the Bayesian blocks)
-	cparray = lcbayes(cellsizes, cellpops, ncells, ncp_prior, ncp, best, last_start, nlag);
+	cp_array, num_cps, bestlogprob, lastcellstart = lcbayes(cell_curve, ncp_prior, nlag);
+	print(cp_array)
 
+	# Rebin light curve 
+	cell_curve = rebinlc(light_curve, cp_array, num_cps)
+	
+	# Re-retrieve the change points
+	cparray, num_cps, bestlogprob, lastcellstart = lcbayes(cell_curve, ncp_prior, nlag);
+	
 	# Compute the cumulative total number of counts, matched to the time array
-	cumsum = lccumsum(rate, nrows);
+	cumsum = lccumsum(light_curve);
 
 	# Coalesce first or last blocks if they are outliers
-	if ((ncp > 2) and (coalescefrac > 0)):
-		t0start = t[cparray[0]] - 0.5*dt[cparray[0]];
-		t1start = t[cparray[1]] - 0.5*dt[cparray[1]];
+	if ((num_cps > 2) and (coalescefrac > 0)):
+		t0start = light_curve['TIME'][cparray[0]] - 0.5*timedel;
+		t1start = light_curve['TIME'][cparray[1]] - 0.5*timedel;
 		t0stop = t1start;
 		t1stop = None;
 
 		if (cparray[2] == nrows): 
-			t1stop = t[nrows-1] + 0.5*dt[nrows-1];
+			t1stop = light_curve['TIME'][nrows-1] + 0.5*timedel;
 		else:
-			t1stop = t[cparray[2]] - 0.5*dt[cparray[2]];
+			t1stop = light_curve['TIME'][cparray[2]] - 0.5*timedel;
 
 		# Remove the first changepoint
 		if ((t0stop-t0start) < (t1stop-t1start)*coalescefrac):
 			i = 1
-			for i in range(ncp-1):
+			for i in range(num_cps-1):
 				cparray[i] = cparray[i+1]
-			ncp-=1;
+			num_cps-=1;
 
 
-	if (ncp > 2 and coalescefrac > 0):
-		t0start = t[cparray[ncp-3]] - 0.5*dt[cparray[ncp-3]];
-		t1start = t[cparray[ncp-2]] - 0.5*dt[cparray[ncp-2]];
+	if (num_cps > 2 and coalescefrac > 0):
+		t0start = light_curve['TIME'][cparray[num_cps-3]] - 0.5*timedel;
+		t1start = light_curve['TIME'][cparray[num_cps-2]] - 0.5*timedel;
 		t0stop = t1start;
 		t1stop = None;
 
-		if (cparray[ncp-1] == nrows):
-			t1stop = t[nrows-1] + 0.5*dt[nrows-1];
+		if (cparray[num_cps-1] == nrows):
+			t1stop = light_curve['TIME'][nrows-1] + 0.5*timedel;
 		else:
-			t1stop  = t[cparray[ncp-1]] - 0.5*dt[cparray[ncp-1]];
+			t1stop  = light_curve['TIME'][cparray[num_cps-1]] - 0.5*timedel;
 
 		# Remove the last changepoint
 		if ((t1stop-t1start) < (t0stop-t0start)*coalescefrac):
-			cparray[ncp-2] = cparray[ncp-1];
-			ncp-=1
+			cparray[num_cps-2] = cparray[num_cps-1];
+			num_cps-=1
 
 	# Find bin edges. The last point is tricky, since it refers to the N+1'th cell. */
-	for i in range(ncp-1): 
-		bbgti.start[i] = t[cparray[i]] - 0.5*dt[cparray[i]];
+	bbgti = np.zeros(shape=num_cps-1, dtype=[("start",float),("stop",float)])
+	for i in range(num_cps-1): 
+		bbgti['start'][i] = light_curve['TIME'][cparray[i]] - 0.5*timedel;
 		if (cparray[i+1] == nrows):
-			bbgti.stop[i]  = t[nrows-1] + 0.5*dt[nrows-1];
+			bbgti["stop"][i]  = light_curve['TIME'][nrows-1] + 0.5*timedel;
 		else:
-			bbgti.stop[i]  = t[cparray[i+1]] - 0.5*dt[cparray[i+1]];
-	bbgti.ngti = ncp-1;
+			bbgti["stop"][i]  = light_curve['TIME'][cparray[i+1]] - 0.5*timedel;
+	ngti = num_cps-1;
 
 	# Estimate the burst duration, from the end of the first BB to the beginning of the last BB
-	burst_tstart = bbgti.stop[0];
-	burst_tstop  = bbgti.start[bbgti.ngti-1];
+	burst_tstart = bbgti["stop"][0];
+	burst_tstop  = bbgti["start"][ngti-1];
+
+	# Estimate the burst duration intervals
+	duration = burst_tstop - burst_tstart
 
 	# Find istart and istop
-	burstspan(t, dt, nrows, burst_tstart, burst_tstop, istart, istop)
+	istart, istop = burstspan(light_curve, burst_tstart, burst_tstop)
 
 	# Estimate the fluence
 	fluence = cumsum[istop] - cumsum[istart];
 
+	print(burst_tstart)
+	print(burst_tstop)
 
-def burstspan(t):
-	"""
-	Find start and stop times:
-	1. start time is end of first BB, which is assumed to be the
-	pre-burst background.
-	2. stop is the start of the last BB, which is assumed to be the
-	post-burst background.
-	"""
-	istart, istop = None, None;
-	i = 0;
-	j = 0;
+	return duration, fluence
 
-	for i in range(nrows):
-		if (t[i] >= tstart):
-			break;
-	istart = i-1;
-	
-	if (i == 0):
-		istart = 0;
-	
-	for j in range(istart+1,nrows):
-		if (t[j] >= tstop):
-			break;
-	istop = j;
-	if (i == nrows):
-		istop = nrows-1;
-
-	return istart, istop
-
-def lccumsum(counts, ntimes):
-	"""
-	Form the cumulative sum of the light curve, between two points.
-	The data is assumed to be expressed in counts already. 
-	Times are assumed to be center-bin.
-	"""
-
-	cumcounts = np.zeros(shape=ntimes);
-
-	cumcounts[0] = counts[0];
-	for i in range(1, ntimes):
-		cumcounts[i] = cumcounts[i-1] + counts[i];
-
-	return cumcounts;
-
-def lcbayes(cellsizes, cellpops, ncells, 
-	ncp_prior, ncparray, bestlogprob, lastcellstart, nlag):
+def lcbayes(cell_curve, ncp_prior, nlag):
 	"""
 	Determine the Bayesian block change points, based on the 
 	Poisson binned cost function
 		
 	Attributes:
 	----------
-	cellsizes : np.ndarray
-		widths of cells, in units of timedel
-	cellpops : np.ndarray
-		number of events in each cell
-	ncells : float 
-		number of cells
+	cell_curve : np.ndarray
+
 	ncp_prior : float
 		log parameter for number of changepoints
-	ncparray :
-
-	bestlogprob :
-
-	lastcellstart :
-
-	nlag :
-
 	"""
 
-	cumsizes = np.zeros(shape=ncells)
-	cumpops = np.zeros(shape=ncells)
-	last_start = np.zeros(shape=ncells)
-	cparray = 0;
+	ncells = len(cell_curve)
+	cum_cell_curve = np.zeros(shape=ncells, dtype=[("size",float),("pop",float)])
+
+	last_start = np.zeros(shape=ncells, dtype=int) # last cell start 
 	merged = np.zeros(shape=ncells)
-	best = np.zeros(shape=ncells)
+	best = np.zeros(shape=ncells) # best log probability 
 	temp= 0;
-	imaxer, ncp, index, icp = 0,0,0,0;
-	istart = 0
-	ioldstart = 0;
-
-	if (bestlogprob):
-		bestlogprob = 0;
-	if (lastcellstart):
-		lastcellstart = 0;
-
-	for i in range(ncells):
-		cumsizes[i] = 0;
-		cumpops[i] = 0;
+	imaxer=0;
 
 	istart = 0;
 	ioldstart = 0;
@@ -237,23 +190,24 @@ def lcbayes(cellsizes, cellpops, ncells,
 			for j in range(istart, i):
 				best[j] -= best[istart-1];
 
-			# Accumulate the parameters */
-			for j in range(istart, i):
-				cumsizes[j] += cellsizes[i];
-				cumpops[j]  += cellpops[i];
-		
-			cumsizes[i] = cellsizes[i];
-			cumpops[i] = cellpops[i];
+		# Accumulate the parameters
+		for j in range(istart, i):
+			cum_cell_curve['size'][j] += cell_curve['size'][i];
+			cum_cell_curve['pop'][j]  += cell_curve['pop'][i];
+	
 
-			# Compute the cost function for the cumulants */
-			logprob_lc(cumpops+istart, cumsizes+istart, i+1-istart, merged+istart, ncp_prior);
+		cum_cell_curve['size'][i] = cell_curve['size'][i];
+		cum_cell_curve['pop'][i] = cell_curve['pop'][i];
 
-			# Where is the maximum probability in the joint best|mergedarrays? */
-			imaxer = istart;
-			best[i] = merged[istart];
-			if (i > 0):
-				for j in range(istart+1, i+1):
-					temp = best[j-1]+merged[j];
+		# Compute the cost function for the cumulants */
+		merged[istart:i+1-istart] = logprob_lc(cum_cell_curve[istart:i+1-istart], ncp_prior);
+
+		# Where is the maximum probability in the joint best|mergedarrays? */
+		imaxer = istart;
+		best[i] = merged[istart];
+		if (i > 0):
+			for j in range(istart+1, i+1):
+				temp = best[j-1]+merged[j];
 				if (temp > best[i]):
 					best[i] = temp;
 					imaxer = j;
@@ -272,10 +226,8 @@ def lcbayes(cellsizes, cellpops, ncells,
 		ncp +=1;
 		index = last_start[index-1];
 
-	# Create output array of change points */
-	cparray = np.zeros(shape=ncp);
-	if (cparray == 0):
-		ncp = 0;
+	# Create output array of change points
+	cparray = np.zeros(shape=ncp, dtype=int)
 
 	icp = ncp-1;
 	cparray[icp] = ncells;
@@ -287,74 +239,92 @@ def lcbayes(cellsizes, cellpops, ncells,
 		index = last_start[index-1];
 	cparray[0] = 0;
 
-	ncparray = ncp;
-	return cparray;
 
 
-def logprob_lc(cellpops, cellsizes, ncells, ncp_prior):
+	return cparray, ncp, best, last_start
+
+
+def logprob_lc(cell_curve, ncp_prior):
 	"""
 	Computes log posterior probability for binned data. See:  J.D. Scargle, 1998, ApJ, 504, 405.
 	
 	Attributes:
 	----------
-	cellpops : np.ndarray
-		number of events in each cell
-	cellsizes : np.ndarray
-		widths of cells, in units of timedel
-	ncells : float 
-		number of cells
+	cell_curve:
+
 	ncp_prior : float
 		log parameter for number of changepoints
 	"""
 
+	ncells = len(cell_curve)
 	logprob = np.zeros(ncells)
 
 	for i in range(ncells):
-		logprob[i] = scipy.special.lgamma(cellpops[i]+1) - (cellpops[i]+1)*np.log(cellsizes[i]);
+		logprob[i] = scipy.special.gammaln(cell_curve['pop'][i]+1) - (cell_curve['pop'][i]+1)*np.log(cell_curve['size'][i]);
 		logprob[i] -= ncp_prior;
 
 	return logprob
 
-def lc2cells(t, counts, dt, ntimes, cellsizes, cellpops, ncells, timedel):
+def burstspan(light_curve, tstart, tstop):
 	"""
-	Convert a light curve to cells, by direct transcription
-
-	Attributes:
-	----------
-	t : np.ndarray
-		array of light curve times
-	counts : np.ndarray
-		array of light curve counts
-	dt : np.ndarry
-		array of time bin sizes
-	cellsizes : np.ndarray
-		widths of cells, in units of timedel
-	cellpops : np.ndarray
-		number of events in each cell
-	ncells : float 
-		number of cells
-	timedel : float 
-		time bin size
+	Find start and stop times:
+	1. start time is end of first BB, which is assumed to be the
+	pre-burst background.
+	2. stop is the start of the last BB, which is assumed to be the
+	post-burst background.
 	"""
-	cpops = 0
-	csize = 0
 
-	if ((t == 0) or (counts == 0) or (dt == 0) or 
-		(ntimes <= 0) or (cellsizes == 0) or 
-		(cellpops == 0)):
-		return 0;
+	nrows = len(light_curve)
 
-	nc = ntimes;
+	for i in range(nrows):
+		if (light_curve['TIME'][i] >= tstart):
+			break;
+	istart = i-1;
+	
+	if (i == 0):
+		istart = 0;
+	
+	for j in range(istart+1,nrows):
+		if (light_curve['TIME'][j] >= tstop):
+			break;
+	istop = j;
+	if (i == nrows):
+		istop = nrows-1;
 
-	if nc == 0:
-		return 0;
+	return istart, istop
 
-	for i in range(nc):
-		csize[i] = dt[i] / timedel;
-		cpops[i] = counts[i];
+def lccumsum(light_curve):
+	"""
+	Form the cumulative sum of the light curve, between two points.
+	The data is assumed to be expressed in counts already. 
+	Times are assumed to be center-bin.
+	"""
 
-	cellsizes = csize;
-	cellpops = cpops;
-	ncells = nc;
+	cumcounts = np.zeros(shape=len(light_curve));
 
-	return 0;
+	cumcounts[0] = light_curve['RATE'][0];
+	for i in range(1, len(light_curve)):
+		cumcounts[i] = cumcounts[i-1] + light_curve['RATE'][i];
+
+	return cumcounts;
+
+
+
+def rebinlc(light_curve, cp_array, num_cps):
+	"""
+	Rebin an existing light curve to a new one, given a set of change points
+	"""
+
+	timedel = light_curve['TIME'][1] - light_curve['TIME'][0]
+	nc = num_cps-1;
+	new_cell_curve = np.zeros(shape=nc,dtype=[("size",float),("pop",float)])
+  
+	for j in range(nc):
+		dtot = 0;
+		new_cell_curve["pop"][j] = 0;
+		for i in range(cp_array[j], cp_array[j+1]):
+			dtot += timedel # since we are using constant time bins, we can just use timedel here.
+			new_cell_curve["pop"][j] += light_curve['RATE'][i];
+		new_cell_curve['size'][j] = int(dtot/timedel);
+
+	return new_cell_curve;
