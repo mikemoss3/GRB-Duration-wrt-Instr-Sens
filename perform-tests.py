@@ -10,19 +10,6 @@ from astropy.io import fits
 from packages.package_bayesian_block import bayesian_t_blocks
 from packages.class_GRB import GRB
 
-# Import the time library
-import time
-
-
-grb= GRB()
-# grb.load_light_curve("data_files/grb_060614/grb_060614_1chan_1s.lc", rm_trigtime=True, det_area=0.16)
-grb.load_light_curve("data_files/grb_211211A/grb_211211A_1chan_1s.lc", rm_trigtime=True, det_area=0.16)
-grb.cut_light_curve(tmin=-100, tmax=250)
-
-
-# Calculate the start time
-print(bayesian_t_blocks(grb.light_curve))
-
 
 """
 run_unit_tests = False
