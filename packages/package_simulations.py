@@ -122,8 +122,6 @@ def apply_mask_weighting(light_curve, imx, imy, ndets, bgd_rate):
 	# Calculate the mask-weighted RATE column
 	light_curve['RATE'] = (light_curve["RATE"] - bgd_rate)/correction # background-subtracted counts / sec / dets
 
-	np.savetxt("test.txt", light_curve)
-
 
 	return light_curve
 
