@@ -75,8 +75,53 @@ class PLOTS(object):
 	def show(self):
 		plt.show()
 
-	def savefig(self, fname):
-		plt.savefig(fname)
+	def savefig(self, fname, dpi='figure'):
+		plt.savefig(fname, dpi = dpi)
+
+class PLOTGRB(PLOTS):
+	def __init__(self, grb=None):
+		PLOTS.__init__()
+
+	def plot_light_curves(self, grbs, t_window=None, labels=None, ax=None, alpha=0.7, **kwargs):
+		"""
+		Method to plot the average duration percentage as a function of the position on the detector plane
+
+		Attributes:
+		----------
+		grbs : GRB, array of GRB
+			Either a single instance of a GRB or an array of GRBs for which the light curves will be plotted on the same axis
+		ax : matplotlib.axes
+			Axis on which to create the figure
+		"""
+
+		if ax is None:
+			ax = plt.figure().gca()
+
+		# For an array of GRBs
+		if hasattr(grbs,'__len__'):
+			for i in range(len(grbs)):
+				if labels is None:
+					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
+				else:
+					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
+		# For a single GRB
+		else:
+			ax.errorbar(x=grbs.light_curve['TIME'],y=grbs.light_curve['RATE'],yerr=grbs.light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)
+
+		ax.set_xlabel("Time (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		if t_window is not None:
+			ax.set_xlim(t_window)
+
+		if labels is not None:
+			ax.legend(fontsize=self.fontsize-2)
+
+		self.plot_aesthetics(ax)
+
+class PLOTSIMRES(PLOTS):
+	def __init__(self, sim_results=None):
+		PLOTS.__init__()
 
 	def duration_overlay(self, sim_results, light_curve, order_type=2, ax=None, **kwargs):
 		"""
@@ -281,39 +326,67 @@ class PLOTS(object):
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def plot_light_curves(self, grbs, t_window=None, labels=None, ax=None, alpha=0.7, **kwargs):
-		"""
-		Method to plot the average duration percentage as a function of the position on the detector plane
 
-		Attributes:
-		----------
-		grbs : GRB, array of GRB
-			Either a single instance of a GRB or an array of GRBs for which the light curves will be plotted on the same axis
-		ax : matplotlib.axes
-			Axis on which to create the figure
-		"""
+class PLOTSAMPLE(PLOTS):
+	def __init__(self, data_table):
+		PLOTS.__init__()
+		self.fig = plt.gcf()
+		self.ax = plt.figure().gca()
 
-		if ax is None:
-			ax = plt.figure().gca()
+	def cumulative_durations(self, bins=None, bin_min=None, bin_max=None, **kwargs):
 
-		# For an array of GRBs
-		if hasattr(grbs,'__len__'):
-			for i in range(len(grbs)):
-				if labels is None:
-					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
-				else:
-					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
-		# For a single GRB
-		else:
-			ax.errorbar(x=grbs.light_curve['TIME'],y=grbs.light_curve['RATE'],yerr=grbs.light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)
+		if bins is None:
+			if bin_min is None:
+				bin_min	= np.log10(0.1)
+			if bin_max is None:
+				bin_max = np.log10(np.max(self.data_table['DURATION']) )
 
-		ax.set_xlabel("Time (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
-		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)
+			bins = np.logspace(start=bin_min, stop = bin_max, num=100)
 
-		if t_window is not None:
-			ax.set_xlim(t_window)
+		self._make_cumu_plot(self.data_table["DURATION"], bins=bins, **kwargs)
 
-		if labels is not None:
-			ax.legend(fontsize=self.fontsize-2)
+		self.ax.set_xscale("log")
+		# self.ax.set_yscale("log")
 
-		self.plot_aesthetics(ax)
+		self.ax.legend()
+
+		self.ax.set_xlabel("Duration (sec)", fontsize=14)
+		self.ax.set_ylabel("Normalied Histogram (arb units)", fontsize=14)
+		self.ax.set_title("T90 Distrubtion (3<z<9)", fontsize=14)
+
+		self.plot_aesthetics(self.ax)
+
+	def cumulative_fluence(self, bins = None, bin_min=None, bin_max=None, **kwargs):
+
+		if bins is None:
+			if bin_min is None:
+				bin_min	= np.log10(0.1)
+			if bin_max is None:
+				bin_max = np.log10(np.max(self.data_table['FLUENCE']) )
+
+			bins = np.logspace(start=bin_min, stop = bin_max, num=100)
+		
+		self._make_cumu_plot(self.data_table["FLUENCE"], bins=bins, **kwargs)
+
+		self.ax.set_xscale("log")
+		# self.ax.set_yscale("log")
+
+		self.ax.legend()
+
+		self.ax.set_xlabel("Fluence (counts/sec/det)", fontsize=self.fontsize)
+		self.ax.set_ylabel("Normalied Histogram (arb units)", fontsize=self.fontsize)
+		self.ax.set_title("Fluence Distrubtion (3<z<9)", fontsize=self.fontsize)
+
+		self.plot_aesthetics(self.ax)
+
+
+	def _make_cumu_plot(self, values, bins, **kwargs):
+
+		# Make histogram
+		count, edges = np.histogram(values, bins=bins)
+		# Make cumulative distribution 
+		cum_count = np.cumsum(count)
+		# Plot cumulative distribution 
+		self.ax.stairs(cum_count/np.max(cum_count), edges, **kwargs)
+
+
