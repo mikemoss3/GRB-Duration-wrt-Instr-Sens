@@ -1,6 +1,6 @@
 name = "161001A"
 z = 0.891 # Measured redshift 
-zmax = 4. # Highest redshift to simulate at
+zmax = 4.5 # Highest redshift to simulate at
 fn = "data_files/grb_161001A/grb_161001A_1chan_64ms.lc" # file path to light curve
 t_true = 2.6 # true T90
 t_cut_min = -10 # cut data before this time 
