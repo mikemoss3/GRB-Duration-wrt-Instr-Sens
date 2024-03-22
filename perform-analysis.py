@@ -113,7 +113,6 @@ if __name__ == "__main__":
 		param_list = make_param_space(grbp) # Create parameter combination list 
 		trials = 1000
 
-		if grbp.zmax <= 3:
-			main(grbp.name, template_grb, param_list, trials) # Run simulations
+		main(grbp.name, template_grb, param_list, trials) # Run simulations
 
 		# plot(grbp.name, grbp.t_true) # Plot simulation results
