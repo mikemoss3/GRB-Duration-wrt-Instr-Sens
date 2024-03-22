@@ -11,6 +11,7 @@ from packages.class_GRB import GRB
 from packages.class_RSP import ResponseMatrix
 from packages.package_simulations import simulate_observation
 from packages.package_bayesian_block import bayesian_t_blocks
+from packages.package_fluence import calc_fluence
 from util_packages.package_datatypes import dt_sim_res
 
 import matplotlib.pyplot as plt
@@ -85,6 +86,7 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 
 				simulate_observation(template_grb=template_grb, synth_grb = synth_grb, z_p=param_list[i][0],imx=param_list[i][1],imy=param_list[i][2],ndets=param_list[i][3],resp_mat=resp_mat,sim_triggers=sim_triggers,ndet_max=ndet_max,bgd_rate_per_det=bgd_rate_per_det)
 				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
+				sim_results[["FLUENCE","1sPeakFlux"]] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], sim_results['TSTART'][sim_result_ind])
 
 				# Increase simulation index
 				sim_result_ind +=1
@@ -118,7 +120,8 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 
 				sim_results[["z","imx","imy","ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
-				sim_results[["DURATION", "TSTART", "FLUENCE"]][sim_result_ind] = bayesian_t_blocks(synth_grbs[t], dur_per=dur_per) # Find the Duration and the fluence 
+				sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grbs[t], dur_per=dur_per) # Find the Duration and the fluence 
+				sim_results[["FLUENCE","1sPeakFlux"]] = calc_fluence(synth_grbs[t].light_curve, sim_results["DURATION"][sim_result_ind], sim_results['TSTART'][sim_result_ind])
 				sim_result_ind += 1
 
 			if keep_synth_grbs is True:

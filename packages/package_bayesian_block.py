@@ -17,8 +17,13 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 	Method to extract the duration and photon fluence of a GRB from a supplied light curve using a Bayesian block method. 
 
 	Attributes:
-	grb = 		(GRB) 		A grb object 
-	dur_per =	(float) 	Percentage of the fluence to calculate the duration for (i.e., T90 corresponds to dur_per = 90)
+	---------
+	light_curve : nd.array(dtype=[("TIME", float), ("RATE", float), ("UNC", float)])
+		Array that stores the light curve 
+	dur_per : float
+		Indicates the percentage of the total fluence to be enclosed within the reported duration (i.e., T90 corresponds to dur_per = 90)
+	ncp_prior : int
+		Initial guess at the number of change points used by the Bayesian block algorithm
 	"""
 
 	# Astropy bayesian block algorithm -- it is much safer to use since it handles exceptions better, however its an order of magnitude
@@ -29,7 +34,7 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 	# Check if any GTI (good time intervals) were found
 	if len(bin_edges) <= 3:
 		# If true, then no GTI's were found		
-		return 0., 0., 0.
+		return 0., 0.
 	else:
 		# Calculate total duration and start time 
 		t_dur_tot = bin_edges[-2] - bin_edges[1]
@@ -51,9 +56,8 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 		t_end = emission_interval['TIME'][np.argmax(per_end <= cum_sum_fluence)]
 
 		duration = t_end - t_start
-		phot_fluence = np.sum(light_curve['RATE'][np.argmax(t_start<=light_curve['TIME']):np.argmax(t_end<=light_curve['TIME'])])
 
-	return duration, t_start, phot_fluence
+	return duration, t_start
 
 def custom_bb(light_curve, ncp_prior):
 
