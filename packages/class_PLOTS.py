@@ -80,7 +80,7 @@ class PLOTS(object):
 
 class PLOTGRB(PLOTS):
 	def __init__(self, grb=None):
-		PLOTS.__init__()
+		PLOTS.__init__(self)
 
 	def plot_light_curves(self, grbs, t_window=None, labels=None, ax=None, alpha=0.7, **kwargs):
 		"""
@@ -121,7 +121,7 @@ class PLOTGRB(PLOTS):
 
 class PLOTSIMRES(PLOTS):
 	def __init__(self, sim_results=None):
-		PLOTS.__init__()
+		PLOTS.__init__(self)
 
 	def duration_overlay(self, sim_results, light_curve, order_type=2, ax=None, **kwargs):
 		"""
@@ -328,65 +328,88 @@ class PLOTSIMRES(PLOTS):
 
 
 class PLOTSAMPLE(PLOTS):
-	def __init__(self, data_table):
-		PLOTS.__init__()
-		self.fig = plt.gcf()
-		self.ax = plt.figure().gca()
+	def __init__(self, data_tables=None):
+		PLOTS.__init__(self)
 
-	def cumulative_durations(self, bins=None, bin_min=None, bin_max=None, **kwargs):
+		self.data_tables = []
+		if data_tables is not None:	
+			for i in range(len(data_tables)):
+				self.data_tables = self.data_tables.append(data_tables[i])
+
+	def add_data_table(self, new_data_table):
+		self.data_tables = self.data_tables.append(new_data_table)
+
+	def cumulative_durations(self, ax = None, bins=None, bin_min=None, bin_max=None, **kwargs):
+
+		if ax is None:
+			ax = plt.figure().gca()
+		fig = plt.gcf()
 
 		if bins is None:
 			if bin_min is None:
 				bin_min	= np.log10(0.1)
 			if bin_max is None:
-				bin_max = np.log10(np.max(self.data_table['DURATION']) )
+				bin_max = np.log10(np.max(self.data_tables[0]['DURATION']) )
+				for i in range(1,len(self.data_tables)):
+					tmp_bin_max = np.log10(np.max(self.data_tables[i]['DURATION']) )
+					if tmp_bin_max > bin_max:
+						bin_max = tmp_bin_max
 
 			bins = np.logspace(start=bin_min, stop = bin_max, num=100)
 
-		self._make_cumu_plot(self.data_table["DURATION"], bins=bins, **kwargs)
+		for i in range(len(self.data_tables)):
+			self._make_cumu_plot(self.data_tables[i]["DURATION"], bins=bins, ax=ax, **kwargs)
 
-		self.ax.set_xscale("log")
-		# self.ax.set_yscale("log")
+		ax.set_xscale("log")
+		# ax.set_yscale("log")
 
-		self.ax.legend()
+		ax.legend()
 
-		self.ax.set_xlabel("Duration (sec)", fontsize=14)
-		self.ax.set_ylabel("Normalied Histogram (arb units)", fontsize=14)
-		self.ax.set_title("T90 Distrubtion (3<z<9)", fontsize=14)
+		ax.set_xlabel("Duration (sec)", fontsize=14)
+		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=14)
+		ax.set_title("T90 Distrubtion (3<z<9)", fontsize=14)
 
-		self.plot_aesthetics(self.ax)
+		self.plot_aesthetics(ax)
 
-	def cumulative_fluence(self, bins = None, bin_min=None, bin_max=None, **kwargs):
+	def cumulative_fluence(self, ax = None, bins = None, bin_min=None, bin_max=None, **kwargs):
+
+		if ax is None:
+			ax = plt.figure().gca()
+		fig = plt.gcf()
 
 		if bins is None:
 			if bin_min is None:
 				bin_min	= np.log10(0.1)
 			if bin_max is None:
-				bin_max = np.log10(np.max(self.data_table['FLUENCE']) )
-
+				bin_max = np.log10(np.max(self.data_tables[0]['FLUENCE']) )
+				for i in range(1,len(self.data_tables)):
+					tmp_bin_max = np.log10(np.max(self.data_tables[i]['FLUENCE']) )
+					if tmp_bin_max > bin_max:
+						bin_max = tmp_bin_max
 			bins = np.logspace(start=bin_min, stop = bin_max, num=100)
 		
-		self._make_cumu_plot(self.data_table["FLUENCE"], bins=bins, **kwargs)
+		for i in range(len(self.data_tables)):
+			self._make_cumu_plot(self.data_table[i]["FLUENCE"], bins=bins, ax=ax, **kwargs)
 
-		self.ax.set_xscale("log")
-		# self.ax.set_yscale("log")
+		ax.set_xscale("log")
+		# ax.set_yscale("log")
 
-		self.ax.legend()
+		ax.legend()
 
-		self.ax.set_xlabel("Fluence (counts/sec/det)", fontsize=self.fontsize)
-		self.ax.set_ylabel("Normalied Histogram (arb units)", fontsize=self.fontsize)
-		self.ax.set_title("Fluence Distrubtion (3<z<9)", fontsize=self.fontsize)
+		ax.set_xlabel("Fluence (counts/sec/det)", fontsize=self.fontsize)
+		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=self.fontsize)
+		ax.set_title("Fluence Distrubtion (3<z<9)", fontsize=self.fontsize)
 
-		self.plot_aesthetics(self.ax)
+		self.plot_aesthetics(ax)
 
 
-	def _make_cumu_plot(self, values, bins, **kwargs):
+	def _make_cumu_plot(self, values, bins, ax, **kwargs):
 
 		# Make histogram
 		count, edges = np.histogram(values, bins=bins)
 		# Make cumulative distribution 
 		cum_count = np.cumsum(count)
 		# Plot cumulative distribution 
-		self.ax.stairs(cum_count/np.max(cum_count), edges, **kwargs)
+		ax.stairs(cum_count/np.max(cum_count), edges, **kwargs)
 
 
