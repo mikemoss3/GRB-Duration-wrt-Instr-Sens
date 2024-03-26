@@ -77,18 +77,18 @@ def plot(name, t_true):
 if __name__ == "__main__":
 
 	grbs_names = np.array([
-		# "050416A",
-		# "050525A",
-		# "060614",
-		# "060912A",
-		# "061021",
-		# "080430",
-		# "080916A",
-		# "081007",
-		# "090424",
-		# "091018",
-		# "091127",
-		"100621A", # Here got stuck
+		"050416A",
+		"050525A",
+		"060614",
+		"060912A",
+		"061021",
+		"080430",
+		"080916A",
+		"081007",
+		"090424",
+		"091018",
+		"091127",
+		"100621A",
 		"100625A",
 		"100816A",
 		"101219A",
@@ -113,6 +113,6 @@ if __name__ == "__main__":
 		param_list = make_param_space(grbp) # Create parameter combination list 
 		trials = 1000
 
-		main(grbp.name, template_grb, param_list, trials) # Run simulations
+		# main(grbp.name, template_grb, param_list, trials) # Run simulations
 
-		# plot(grbp.name, grbp.t_true) # Plot simulation results
+		plot(grbp.name, grbp.t_true) # Plot simulation results
