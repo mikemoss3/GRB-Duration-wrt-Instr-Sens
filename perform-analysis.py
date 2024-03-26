@@ -21,7 +21,7 @@ from util_packages.package_datatypes import dt_sim_res
 def make_template_grb(grbp):
 
 	## Make GRB object
-	template_grb = GRB(z=grbp.z)
+	template_grb = GRB(grbname = grbp.name, z=grbp.z)
 	# Load light curve 
 	template_grb.load_light_curve(grbp.fn, rm_trigtime=True, det_area=0.16)
 	template_grb.cut_light_curve(tmin=grbp.t_cut_min, tmax=grbp.t_cut_max)
@@ -77,18 +77,18 @@ def plot(name, t_true):
 if __name__ == "__main__":
 
 	grbs_names = np.array([
-		"050416A",
-		"050525A",
-		"060614",
-		"060912A",
-		"061021",
-		"080430",
-		"080916A",
-		"081007",
-		"090424",
-		"091018",
-		"091127",
-		"100621A",
+		# "050416A",
+		# "050525A",
+		# "060614",
+		# "060912A",
+		# "061021",
+		# "080430",
+		# "080916A",
+		# "081007",
+		# "090424",
+		# "091018",
+		# "091127",
+		"100621A", # Here got stuck
 		"100625A",
 		"100816A",
 		"101219A",
