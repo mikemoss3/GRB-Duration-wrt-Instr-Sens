@@ -328,21 +328,10 @@ class PLOTSIMRES(PLOTS):
 
 
 class PLOTSAMPLE(PLOTS):
-	def __init__(self, data_tables=None):
+	def __init__(self):
 		PLOTS.__init__(self)
 
-		self.data_tables = []
-		if data_tables is not None:	
-			for i in range(len(data_tables)):
-				self.data_tables.append(data_tables[i])
-
-	def add_data_table(self, new_data_table):
-		self.data_tables.append(new_data_table)
-
-	def clear_data_table(self):
-		self.data_tables = []
-
-	def cumulative_durations(self, ax = None, bins=None, bin_min=None, bin_max=None, keep_sep=False, **kwargs):
+	def cumulative_durations(self, data, ax = None, bins=None, bin_min=None, bin_max=None, **kwargs):
 
 		if ax is None:
 			ax = plt.figure().gca()
@@ -352,22 +341,12 @@ class PLOTSAMPLE(PLOTS):
 			if bin_min is None:
 				bin_min	= np.log10(0.1)
 			if bin_max is None:
-				bin_max = np.log10(np.max(self.data_tables[0]['DURATION']) )
-				for i in range(1,len(self.data_tables)):
-					tmp_bin_max = np.log10(np.max(self.data_tables[i]['DURATION']) )
-					if tmp_bin_max > bin_max:
-						bin_max = tmp_bin_max
+				bin_max = np.log10(np.max(data['DURATION']) )
 
 			bins = np.logspace(start=bin_min, stop = bin_max, num=100)
 
-		if keep_sep is False:
-			tmp_data_table = []
-			for i in range(len(self.data_tables)):
-				tmp_data_table.append(self.data_tables[i]["DURATION"])
-			self._make_cumu_plot(tmp_data_table, bins=bins, ax=ax, **kwargs)
-		else:
-			for i in range(len(self.data_tables)):
-				self._make_cumu_plot(self.data_tables[i]["DURATION"], bins=bins, ax=ax, **kwargs)
+
+		self._make_cumu_plot(data['DURATION'], bins=bins, ax=ax, **kwargs)
 
 		ax.set_xscale("log")
 		# ax.set_yscale("log")
@@ -380,7 +359,7 @@ class PLOTSAMPLE(PLOTS):
 
 		self.plot_aesthetics(ax)
 
-	def cumulative_fluence(self, ax = None, bins = None, bin_min=None, bin_max=None, keep_sep=False, **kwargs):
+	def cumulative_fluence(self, data, ax = None, bins = None, bin_min=None, bin_max=None, **kwargs):
 
 		if ax is None:
 			ax = plt.figure().gca()
@@ -388,23 +367,14 @@ class PLOTSAMPLE(PLOTS):
 
 		if bins is None:
 			if bin_min is None:
-				bin_min	= np.log10(0.1)
+				bin_min	= np.log10(0.01)
 			if bin_max is None:
-				bin_max = np.log10(np.max(self.data_tables[0]['FLUENCE']) )
-				for i in range(1,len(self.data_tables)):
-					tmp_bin_max = np.log10(np.max(self.data_tables[i]['FLUENCE']) )
-					if tmp_bin_max > bin_max:
-						bin_max = tmp_bin_max
+				bin_max = np.log10(np.max(data['1sPeakFlux']) )
+
 			bins = np.logspace(start=bin_min, stop = bin_max, num=100)
 		
-		if keep_sep is False:
-			tmp_data_table = []
-			for i in range(len(self.data_tables)):
-				tmp_data_table.append(self.data_tables[i]["FLUENCE"])
-			self._make_cumu_plot(tmp_data_table, bins=bins, ax=ax, **kwargs)
-		else:
-			for i in range(len(self.data_tables)):
-				self._make_cumu_plot(self.data_tables[i]["FLUENCE"], bins=bins, ax=ax, **kwargs)
+
+		self._make_cumu_plot(data["1sPeakFlux"], bins=bins, ax=ax, **kwargs)
 
 		ax.set_xscale("log")
 		# ax.set_yscale("log")
@@ -413,7 +383,7 @@ class PLOTSAMPLE(PLOTS):
 
 		ax.set_xlabel("Fluence (counts/sec/det)", fontsize=self.fontsize)
 		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=self.fontsize)
-		ax.set_title("Fluence Distrubtion (3<z<9)", fontsize=self.fontsize)
+		ax.set_title("Fluence Distrubtion (z>3)", fontsize=self.fontsize)
 
 		self.plot_aesthetics(ax)
 

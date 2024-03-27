@@ -115,13 +115,33 @@ if __name__ == "__main__":
 	"""
 
 	plot = PLOTSAMPLE()
+
+	sim_high_z = np.zeros(shape=0, dtype=dt_sim_res)
 	for i in range(len(grbs_names)):
 		grbp = importlib.import_module("data_files.grb_{}.info".format(grbs_names[i]), package=None) # Load GRB parameters
 		sim_results = np.load("data_files/grb_{}/grb_{}_redshift_sim-results.tmp.txt.npy".format(grbp.name, grbp.name))
-		plot.add_data_table(sim_results)
+		sim_high_z = np.append(sim_high_z, sim_results[(sim_results["z"]>3) & (sim_results["z"]<9)])
 
-	plot.cumulative_durations(keep_sep=False, z_min=3, label="Sim high z")
+	plot.cumulative_durations(data = sim_high_z, label="Sim high z")
+	# plot.cumulative_fluence(data = sim_high_z, label="Sim high z")
 	ax = plt.gca()
+
+	sim_low_z = np.zeros(shape=0, dtype=dt_sim_res)
+	for i in range(len(grbs_names)):
+		grbp = importlib.import_module("data_files.grb_{}.info".format(grbs_names[i]), package=None) # Load GRB parameters
+		sim_results = np.load("data_files/grb_{}/grb_{}_redshift_sim-results.tmp.txt.npy".format(grbp.name, grbp.name))
+		sim_low_z = np.append(sim_low_z, sim_results[sim_results["z"]<1])
+		# sim_low_z = np.append(sim_low_z, sim_results)
+
+	plot.cumulative_durations(data = sim_low_z, ax=ax, bin_max=np.log10(ax.get_xlim()[1]), label="Sim low z")
+	# plot.cumulative_fluence(data = sim_low_z, ax=ax, bin_max=np.log10(ax.get_xlim()[1]), label="Sim low z")
+
+	obs_low_z = np.zeros(shape=len(grbs_names),dtype=[("DURATION",float)])
+	for i in range(len(grbs_names)):
+		grbp = importlib.import_module("data_files.grb_{}.info".format(grbs_names[i]), package=None) # Load GRB parameters
+		obs_low_z['DURATION'][i] = grbp.t_true
+
+	plot.cumulative_durations(data=obs_low_z, ax=ax, bin_max=np.log10(ax.get_xlim()[1]), label="Obs low z")
 
 	high_z_grbs_names = np.array([
 		"060206", 
@@ -137,26 +157,15 @@ if __name__ == "__main__":
 		"170202A",
 		], dtype="U10")
 
-	low_z_durations = np.zeros(shape=len(grbs_names),dtype=[("DURATION",float)])
-	for i in range(len(grbs_names)):
-		grbp = importlib.import_module("data_files.grb_{}.info".format(grbs_names[i]), package=None) # Load GRB parameters
-		low_z_durations['DURATION'][i] = grbp.t_true
-
-	plot.clear_data_table()
-	plot.add_data_table(low_z_durations)
-	plot.cumulative_durations(ax=ax, bin_max=np.log10(ax.get_xlim()[1]), label="Obs low z")
-
-	high_z_durations = np.zeros(shape=len(high_z_grbs_names),dtype=[("DURATION",float)])
+	obs_high_z = np.zeros(shape=len(high_z_grbs_names),dtype=[("DURATION",float)])
 	for i in range(len(high_z_grbs_names)):
 		grbp = importlib.import_module("data_files.grb_{}.info".format(high_z_grbs_names[i]), package=None) # Load GRB parameters
-		high_z_durations['DURATION'][i] = grbp.t_true
+		obs_high_z['DURATION'][i] = grbp.t_true
 
-	plot.clear_data_table()
-	plot.add_data_table(high_z_durations)
-	plot.cumulative_durations(ax=ax, bin_max=np.log10(ax.get_xlim()[1]), label="Obs high z")
+	plot.cumulative_durations(data = obs_high_z, ax=ax, bin_max=np.log10(ax.get_xlim()[1]), label="Obs high z")
 
-	# plot.savefig(fname="data_files/figs/2024-03-27/cum_dur.png")
-	plot.show()
+	plot.savefig(fname="data_files/figs/2024-03-27/cum_dur.png")
+	# plot.show()
 
 
 
