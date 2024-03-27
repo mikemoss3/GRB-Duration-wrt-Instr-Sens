@@ -334,12 +334,15 @@ class PLOTSAMPLE(PLOTS):
 		self.data_tables = []
 		if data_tables is not None:	
 			for i in range(len(data_tables)):
-				self.data_tables = self.data_tables.append(data_tables[i])
+				self.data_tables.append(data_tables[i])
 
 	def add_data_table(self, new_data_table):
-		self.data_tables = self.data_tables.append(new_data_table)
+		self.data_tables.append(new_data_table)
 
-	def cumulative_durations(self, ax = None, bins=None, bin_min=None, bin_max=None, **kwargs):
+	def clear_data_table(self):
+		self.data_tables = []
+
+	def cumulative_durations(self, ax = None, bins=None, bin_min=None, bin_max=None, keep_sep=False, **kwargs):
 
 		if ax is None:
 			ax = plt.figure().gca()
@@ -357,8 +360,14 @@ class PLOTSAMPLE(PLOTS):
 
 			bins = np.logspace(start=bin_min, stop = bin_max, num=100)
 
-		for i in range(len(self.data_tables)):
-			self._make_cumu_plot(self.data_tables[i]["DURATION"], bins=bins, ax=ax, **kwargs)
+		if keep_sep is False:
+			tmp_data_table = []
+			for i in range(len(self.data_tables)):
+				tmp_data_table.append(self.data_tables[i]["DURATION"])
+			self._make_cumu_plot(tmp_data_table, bins=bins, ax=ax, **kwargs)
+		else:
+			for i in range(len(self.data_tables)):
+				self._make_cumu_plot(self.data_tables[i]["DURATION"], bins=bins, ax=ax, **kwargs)
 
 		ax.set_xscale("log")
 		# ax.set_yscale("log")
@@ -367,11 +376,11 @@ class PLOTSAMPLE(PLOTS):
 
 		ax.set_xlabel("Duration (sec)", fontsize=14)
 		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=14)
-		ax.set_title("T90 Distrubtion (3<z<9)", fontsize=14)
+		ax.set_title("T90 Distrubtions (z>3)", fontsize=14)
 
 		self.plot_aesthetics(ax)
 
-	def cumulative_fluence(self, ax = None, bins = None, bin_min=None, bin_max=None, **kwargs):
+	def cumulative_fluence(self, ax = None, bins = None, bin_min=None, bin_max=None, keep_sep=False, **kwargs):
 
 		if ax is None:
 			ax = plt.figure().gca()
@@ -388,8 +397,14 @@ class PLOTSAMPLE(PLOTS):
 						bin_max = tmp_bin_max
 			bins = np.logspace(start=bin_min, stop = bin_max, num=100)
 		
-		for i in range(len(self.data_tables)):
-			self._make_cumu_plot(self.data_table[i]["FLUENCE"], bins=bins, ax=ax, **kwargs)
+		if keep_sep is False:
+			tmp_data_table = []
+			for i in range(len(self.data_tables)):
+				tmp_data_table.append(self.data_tables[i]["FLUENCE"])
+			self._make_cumu_plot(tmp_data_table, bins=bins, ax=ax, **kwargs)
+		else:
+			for i in range(len(self.data_tables)):
+				self._make_cumu_plot(self.data_tables[i]["FLUENCE"], bins=bins, ax=ax, **kwargs)
 
 		ax.set_xscale("log")
 		# ax.set_yscale("log")
