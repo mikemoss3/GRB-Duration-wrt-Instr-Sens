@@ -60,7 +60,7 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 	synth_grb = template_grb.copy() # Copies light curve and spectrum
 
 	if verbose is True:
-		print("Tot number of param combinations = ", len(param_list))
+		print("Tot number of param combinations for GRB {} = {} ".format( template_grb.grbname ,len(param_list)) )
 
 	# Simulate an observation for each parameter combination
 	if multiproc is False:
@@ -71,7 +71,7 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 	
 		for i in range(len(param_list)):
 			if verbose is True:
-				print("Param combination for GRB {} {}/{}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(template_grb.grbname, i+1, len(param_list), param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
+				print("Param combination {}/{}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i+1, len(param_list), param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
 		
 			# Load Swift BAT response based on the IMX, IMY position on the detector plane 
 			resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
