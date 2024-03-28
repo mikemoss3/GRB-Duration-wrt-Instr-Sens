@@ -75,7 +75,7 @@ class PLOTS(object):
 	def show(self):
 		plt.show()
 
-	def savefig(self, fname, dpi='figure'):
+	def savefig(self, fname, dpi=400):
 		plt.savefig(fname, dpi = dpi)
 
 class PLOTGRB(PLOTS):
@@ -339,11 +339,11 @@ class PLOTSAMPLE(PLOTS):
 
 		if bins is None:
 			if bin_min is None:
-				bin_min	= np.log10(0.1)
+				bin_min	= 0.1
 			if bin_max is None:
-				bin_max = np.log10(np.max(data['DURATION']) )
+				bin_max = np.max(data['DURATION'])
 
-			bins = np.logspace(start=bin_min, stop = bin_max, num=100)
+			bins = np.logspace(start=np.log10(bin_min), stop = np.log10(bin_max), num=100)
 
 
 		self._make_cumu_plot(data['DURATION'], bins=bins, ax=ax, **kwargs)
@@ -351,7 +351,8 @@ class PLOTSAMPLE(PLOTS):
 		ax.set_xscale("log")
 		# ax.set_yscale("log")
 
-		ax.legend()
+		if "label" in kwargs:
+			ax.legend()
 
 		ax.set_xlabel("Duration (sec)", fontsize=14)
 		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=14)
@@ -367,19 +368,20 @@ class PLOTSAMPLE(PLOTS):
 
 		if bins is None:
 			if bin_min is None:
-				bin_min	= np.log10(0.01)
+				bin_min	= 0.01
 			if bin_max is None:
-				bin_max = np.log10(np.max(data['1sPeakFlux']) )
+				bin_max = np.max(data['FLUENCE']) 
 
-			bins = np.logspace(start=bin_min, stop = bin_max, num=100)
+			bins = np.logspace(start=np.log10(bin_min), stop = np.log10(bin_max), num=100)
 		
 
-		self._make_cumu_plot(data["1sPeakFlux"], bins=bins, ax=ax, **kwargs)
+		self._make_cumu_plot(data["FLUENCE"], bins=bins, ax=ax, **kwargs)
 
 		ax.set_xscale("log")
 		# ax.set_yscale("log")
 
-		ax.legend()
+		if "label" in kwargs:
+			ax.legend()
 
 		ax.set_xlabel("Fluence (counts/sec/det)", fontsize=self.fontsize)
 		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=self.fontsize)
