@@ -62,32 +62,32 @@ def main(name, template_grb, param_list, trials):
 if __name__ == "__main__":
 
 	grbs_names = np.array([
-		"050416A",
-		"050525A",
-		"060614",
-		"060912A",
-		"061021",
-		"080430",
-		"080916A",
-		"081007",
+		# "050416A",
+		# "050525A",
+		# "060614",
+		# "060912A",
+		# "061021",
+		# "080430",
+		# "080916A",
+		# "081007",
 		"090424",
-		"091018",
-		"091127",
-		"100621A",
-		"100625A",
-		"100816A",
-		"101219A",
-		"110715A",
-		"111228A",
-		"120311A",
-		"130427A",
-		"130603B",
-		"130925A",
-		"140506A",
-		"160425A",
-		"160804A",
-		"161001A",
-		"161219B",
+		# "091018",
+		# "091127",
+		# "100621A",
+		# "100625A",
+		# "100816A",
+		# "101219A",
+		# "110715A",
+		# "111228A",
+		# "120311A",
+		# "130427A",
+		# "130603B",
+		# "130925A",
+		# "140506A",
+		# "160425A",
+		# "160804A",
+		# "161001A",
+		# "161219B",
 		], dtype="U10")
 
 
@@ -97,6 +97,6 @@ if __name__ == "__main__":
 		template_grb = make_template_grb(grbp) # Create template GRB
 
 		param_list = make_param_space(grbp) # Create parameter combination list 
-		trials = 1000
+		trials = 100
 
-		# main(grbp.name, template_grb, param_list, trials) # Run simulations
+		main(grbp.name, template_grb, param_list, trials) # Run simulations

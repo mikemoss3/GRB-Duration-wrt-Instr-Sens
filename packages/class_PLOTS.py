@@ -10,6 +10,7 @@ Defines the class and methods used for plotting simulation results.
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
+from util_packages.package_cosmology import lum_dis
 
 class PLOTS(object):
 	"""
@@ -254,7 +255,7 @@ class PLOTSIMRES(PLOTS):
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
-	def redshift_evo(self, sim_results, ax=None, t_true=None, t_max=None, dur_frac=False, bins = None, log=False, **kwargs):
+	def redshift_evo(self, sim_results, ax=None, t_true=None, t_max=None, dur_frac=False, log=False, **kwargs):
 		"""
 		Method to plot the measured duration of each synthetic light curve as a function redshift
 
@@ -273,8 +274,6 @@ class PLOTSIMRES(PLOTS):
 		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
 		if t_max is None:
 			t_max = np.max(sim_results['DURATION'])
-		if bins is None:
-			bins = int((z_max - z_min)/10)
 
 		z_arr = np.linspace(0, z_max*1.1)
 		def dilation_line(z):
@@ -326,16 +325,82 @@ class PLOTSIMRES(PLOTS):
 		fig.tight_layout()
 		self.plot_aesthetics(ax)
 
+	def redshift_fluence_evo(self, sim_results, ax=None, F_true=None, F_max=None, fluence_frac=False, **kwargs):
+		"""
+		Method to plot the measured duration of each synthetic light curve as a function redshift
+
+		Attributes:
+		----------
+		ax : matplotlib.axes
+			Axis on which to create the figure
+		"""
+
+		if ax is None:
+			ax = plt.figure().gca()
+		fig = plt.gcf()
+
+		results = sim_results[sim_results['FLUENCE'] > 0]
+
+		z_min, z_max = np.min(sim_results['z']), np.max(sim_results['z'])
+		if F_max is None:
+			F_max = np.max(sim_results['FLUENCE'])
+
+		if F_true is None:
+			F_true = np.mean(sim_results['FLUENCE'][sim_results['z']==z_min])
+
+		z_arr = np.linspace(0.001, z_max*1.1)
+		def luminosity_distance(z):
+			arr = np.zeros(shape=len(z))
+			for i in range(len(z)):
+				arr[i] = F_true * (lum_dis(z_min) / lum_dis(z[i]) )**2
+			return arr
+
+		cmap = plt.cm.get_cmap("viridis").copy()
+		cmap.set_bad(color="w")
+		cmin=1e-20
+		cmin=0
+
+		dur_arr = results["FLUENCE"]
+		dur_arr = np.log10(dur_arr)
+		if fluence_frac is True:
+			dur_arr /= F_true
+		
+		F_max = np.log10(F_max)
+		F_min = -1
+
+		im = ax.hist2d(results['z'], dur_arr, range= [[0, z_max*1.1], [F_min, F_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
+
+		ax.axvline(x=z_min,color="r",linestyle="dashed",alpha=0.5,label="Measured Redshift")
+		ax.axvline(x=z_max,color="r",linestyle="dashed",alpha=0.5,label="Max. Simulated Redshift")
+
+		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="w", linestyle="dashed", alpha=0.5)
+		ax.set_ylabel(r"log(Photon Fluence) log(cnts cm$^{-2}$)",fontsize=self.fontsize,fontweight=self.fontweight)
+		ax.set_ylim(-1)
+
+		ax.set_xlim(0, z_max*1.1)
+
+
+		# cbar.set_label("Frequency",fontsize=self.fontsize,fontweight=self.fontweight)
+
+		fig.tight_layout()
+		self.plot_aesthetics(ax)
+
 
 class PLOTSAMPLE(PLOTS):
 	def __init__(self):
 		PLOTS.__init__(self)
 
-	def cumulative_durations(self, data, ax = None, bins=None, bin_min=None, bin_max=None, **kwargs):
+	def cumulative_durations(self, data, ax = None, bins=None, bin_min=None, bin_max=None, normed=False, **kwargs):
 
 		if ax is None:
 			ax = plt.figure().gca()
 		fig = plt.gcf()
+
+		norm =1
+		if normed == True:
+			norm = np.max(data['DURATION'])
 
 		if bins is None:
 			if bin_min is None:
@@ -345,8 +410,7 @@ class PLOTSAMPLE(PLOTS):
 
 			bins = np.logspace(start=np.log10(bin_min), stop = np.log10(bin_max), num=100)
 
-
-		self._make_cumu_plot(data['DURATION'], bins=bins, ax=ax, **kwargs)
+		self._make_cumu_plot(data['DURATION']/norm, bins=bins, ax=ax, **kwargs)
 
 		ax.set_xscale("log")
 		# ax.set_yscale("log")
@@ -354,9 +418,9 @@ class PLOTSAMPLE(PLOTS):
 		if "label" in kwargs:
 			ax.legend()
 
-		ax.set_xlabel("Duration (sec)", fontsize=14)
+		ax.set_xlabel("T90", fontsize=14)
 		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=14)
-		ax.set_title("T90 Distrubtions (z>3)", fontsize=14)
+		ax.set_title("T90 Distrubtions", fontsize=14)
 
 		self.plot_aesthetics(ax)
 
@@ -383,9 +447,38 @@ class PLOTSAMPLE(PLOTS):
 		if "label" in kwargs:
 			ax.legend()
 
-		ax.set_xlabel("Fluence (counts/sec/det)", fontsize=self.fontsize)
+		ax.set_xlabel("Fluence (counts/det)", fontsize=self.fontsize)
 		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=self.fontsize)
-		ax.set_title("Fluence Distrubtion (z>3)", fontsize=self.fontsize)
+		ax.set_title("T90 Fluence Distrubtion", fontsize=self.fontsize)
+
+		self.plot_aesthetics(ax)
+
+	def cumulative_peak_flux(self, data, ax = None, bins = None, bin_min=None, bin_max=None, **kwargs):
+
+		if ax is None:
+			ax = plt.figure().gca()
+		fig = plt.gcf()
+
+		if bins is None:
+			if bin_min is None:
+				bin_min	= 0.01
+			if bin_max is None:
+				bin_max = np.max(data['1sPeakFlux']) 
+
+			bins = np.logspace(start=np.log10(bin_min), stop = np.log10(bin_max), num=100)
+		
+
+		self._make_cumu_plot(data["1sPeakFlux"], bins=bins, ax=ax, **kwargs)
+
+		ax.set_xscale("log")
+		# ax.set_yscale("log")
+
+		if "label" in kwargs:
+			ax.legend()
+
+		ax.set_xlabel("1s Peak Flux (counts/sec/det)", fontsize=self.fontsize)
+		ax.set_ylabel("Normalied Histogram (arb units)", fontsize=self.fontsize)
+		ax.set_title("1s Peak Flux Distrubtion", fontsize=self.fontsize)
 
 		self.plot_aesthetics(ax)
 

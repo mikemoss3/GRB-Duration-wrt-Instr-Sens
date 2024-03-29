@@ -59,30 +59,9 @@ high_z_grbs_names = np.array([
 
 
 
-low_z_results = np.zeros(shape=0, dtype=dt_sim_res)
-low_z_results_unshift = np.zeros(shape=0, dtype=dt_sim_res)
-for i in range(len(low_z_grbs_names)):
-	grbp = importlib.import_module("data_files.grb_{}.info".format(low_z_grbs_names[i]), package=None) # Load GRB parameters
-	sim_results = np.load("data_files/grb_{}/grb_{}_redshift_sim-results.tmp.txt.npy".format(grbp.name, grbp.name))
-	
-	low_z_results = np.append(low_z_results, sim_results[(sim_results["z"]>3) & (sim_results["z"]<9)])
+grbp = importlib.import_module("data_files.grb_130427A.info", package=None) # Load GRB parameters
+sim_results = np.load("data_files/grb_{}/grb_{}_redshift_sim-results.tmp.txt.npy".format(grbp.name, grbp.name))
 
-	low_z_results_unshift = np.append(low_z_results_unshift, sim_results[sim_results["z"]<1])
-
-
-obs_lobs_z_results = np.zeros(shape=len(low_z_grbs_names), dtype=[("DURATION",float),("z",float)])
-for i in range(len(low_z_grbs_names)):
-	grbp = importlib.import_module("data_files.grb_{}.info".format(low_z_grbs_names[i]), package=None) # Load GRB parameters
-	obs_lobs_z_results[i]["DURATION"] = grbp.t_true
-	obs_lobs_z_results[i]["z"] = grbp.z
-
-high_z_results = np.zeros(shape=len(high_z_grbs_names), dtype=[("DURATION",float),("z",float)])
-for i in range(len(high_z_grbs_names)):
-	grbp = importlib.import_module("data_files.grb_{}.info".format(high_z_grbs_names[i]), package=None) # Load GRB parameters
-	high_z_results[i]["DURATION"] = grbp.t_true
-	high_z_results[i]["z"] = grbp.z
-
-
-sim_res_plots = PLOTSAMPLE(data_table=low_z_results)
-sim_res_plots.cumulative_durations()
-sim_res_plots.show()
+sim_results = sim_results[sim_results['z']>3]
+print(sim_results['DURATION'])
+print(sim_results['1sPeakFlux'])
