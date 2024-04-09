@@ -19,6 +19,6 @@ def calc_fluence(light_curve, duration, tstart):
 
 	# Calculate the 1 second peak flux 
 	dt = light_curve['TIME'][1] - light_curve['TIME'][0]
-	flux_peak_1s = np.max(light_curve['RATE'])/dt
+	flux_peak_1s = np.max(light_curve['RATE'])
 
 	return fluence, flux_peak_1s
