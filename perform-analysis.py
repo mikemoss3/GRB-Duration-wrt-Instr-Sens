@@ -13,7 +13,7 @@ import time
 from datetime import date
 
 from packages.class_GRB import GRB
-from packages.class_PLOTS import PLOTSIMRES, PLOTSAMPLE
+from packages.class_PLOTS import PLOTSIMRES, PLOTSAMPLE, PLOTGRB
 from packages.class_SPECFUNC import PL, CPL
 from packages.package_many_simulations import many_simulations, make_param_list, make_ave_sim_res
 from util_packages.package_datatypes import dt_sim_res
@@ -55,8 +55,8 @@ def main(name, template_grb, param_list, trials):
 	# np.save("data-files/grb-{}/grb_{}_detector_sim-results.tmp.txt".format(name, name), sim_results)
 	# np.save("data-files/grb-{}/grb_{}_detector_ave-sim-results.tmp.txt".format(name, name), ave_sim_results)
 	
-	# sim_results, synth_grbs = many_simulations(template_grb, param_list, trials, multiproc=False, keep_synth_grbs=True, verbose=True)
-	# return synth_grbs
+	sim_results, synth_grbs = many_simulations(template_grb, param_list, trials, multiproc=False, keep_synth_grbs=True, verbose=True)
+	return synth_grbs
 
 
 if __name__ == "__main__":
@@ -70,7 +70,7 @@ if __name__ == "__main__":
 		# "080430",
 		# "080916A",
 		# "081007",
-		"090424",
+		# "090424",
 		# "091018",
 		# "091127",
 		# "100621A",
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 		# "110715A",
 		# "111228A",
 		# "120311A",
-		# "130427A",
+		"130427A",
 		# "130603B",
 		# "130925A",
 		# "140506A",
@@ -97,6 +97,6 @@ if __name__ == "__main__":
 		template_grb = make_template_grb(grbp) # Create template GRB
 
 		param_list = make_param_space(grbp) # Create parameter combination list 
-		trials = 100
+		trials = 1000
 
-		main(grbp.name, template_grb, param_list, trials) # Run simulations
+		synth_grbs = main(grbp.name, template_grb, param_list, trials) # Run simulations

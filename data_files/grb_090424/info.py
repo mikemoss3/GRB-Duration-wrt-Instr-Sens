@@ -9,5 +9,3 @@ t_cut_max = 160 # cut data after this time
 alpha = -0.984 # photon index
 ep = 183.397 # keV, peak energy 
 norm = 1.26e-01 # counts cm−2 s^−1 keV^−1, normalization
-
-F_true = 33.035

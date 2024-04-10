@@ -3,6 +3,7 @@ z = 3.758 # Measured redshift
 zmax = 10. # Highest redshift to simulate at
 fn = "data_files/grb_130408A/grb_130408A_1chan_1s.lc" # file path to light curve
 t_true = 4.240 # true T90
+F_true = 2.22 # counts / cm^-2 
 t_cut_min = -10 # cut data before this time 
 t_cut_max = 20 # cut data after this time
 # Best fit cut-off power law info:

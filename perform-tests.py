@@ -14,7 +14,7 @@ from packages.package_bayesian_block import bayesian_t_blocks
 from packages.class_GRB import GRB
 from packages.class_PLOTS import PLOTSAMPLE
 
-low_z_grbs_names = np.array([
+obs_low_z_grbs = np.array([
 	"050416A",
 	"050525A",
 	"060614",
@@ -33,7 +33,7 @@ low_z_grbs_names = np.array([
 	"110715A",
 	"111228A",
 	"120311A",
-	"130427A",
+	# "130427A",
 	"130603B",
 	"130925A",
 	"140506A",
@@ -43,25 +43,13 @@ low_z_grbs_names = np.array([
 	"161219B",
 	], dtype="U10")
 
-high_z_grbs_names = np.array([
-	"060206", 
-	"060210", 
-	"060306", 
-	"060927", 
-	"080607", 
-	"090715B", 
-	"111008A",
-	"120712A",
-	"130408A",
-	"130606A",
-	"170202A",
-	], dtype="U10")
 
 
+for i in range(len(obs_low_z_grbs)):
+	grbp = importlib.import_module("data_files.grb_{}.info".format(obs_low_z_grbs[i]), package=None) # Load GRB parameters
+	sim_results = np.load("data_files/results_final/grb_{}_redshift_sim-results.txt.npy".format(grbp.name, grbp.name))
+	if grbp.fn[-7:] == "64ms.lc":
+		sim_results['1sPeakFlux']*=0.064
 
-grbp = importlib.import_module("data_files.grb_130427A.info", package=None) # Load GRB parameters
-sim_results = np.load("data_files/grb_{}/grb_{}_redshift_sim-results.tmp.txt.npy".format(grbp.name, grbp.name))
-
-sim_results = sim_results[sim_results['z']>3]
-print(sim_results['DURATION'])
-print(sim_results['1sPeakFlux'])
+	np.save("data_files/results_final/grb_{}_redshift_sim-results.txt.npy".format(grbp.name), sim_results)
+	

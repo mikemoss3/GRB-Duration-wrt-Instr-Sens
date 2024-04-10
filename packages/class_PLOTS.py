@@ -22,7 +22,7 @@ class PLOTS(object):
 		Array of simulation results
 	"""
 
-	def __init__(self, fontsize = 13, fontweight = "bold"):
+	def __init__(self, fontsize = 13, fontweight = "normal"):
 
 		self.fontsize = fontsize
 		self.fontweight = fontweight
@@ -348,12 +348,23 @@ class PLOTSIMRES(PLOTS):
 		if F_true is None:
 			F_true = np.mean(sim_results['FLUENCE'][sim_results['z']==z_min])
 
-		z_arr = np.linspace(0.001, z_max*1.1)
+		z_arr = np.linspace(z_min, z_max*1.1)
 		def luminosity_distance(z):
 			arr = np.zeros(shape=len(z))
 			for i in range(len(z)):
 				arr[i] = F_true * (lum_dis(z_min) / lum_dis(z[i]) )**2
 			return arr
+
+		# Swift/BAT 5-sigma Fluence sensitivity line (see Baumgartner 2013)
+		def fluence_sens(time):
+			return 1.18 * 2.4*10**(-2) * time**(1./2.)
+
+		z_vals = np.unique(sim_results['z'])
+		t_vals = np.zeros(shape=len(z_vals))
+		for i in range(len(z_vals)):
+			t_vals[i] = np.mean(results['DURATION'][results['z']==z_min]) * (1+z_vals[i])
+			# t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
+			# t_vals[i] = np.min(results['DURATION'][results['z']==z_vals[i]])
 
 		cmap = plt.cm.get_cmap("viridis").copy()
 		cmap.set_bad(color="w")
@@ -364,9 +375,9 @@ class PLOTSIMRES(PLOTS):
 		dur_arr = np.log10(dur_arr)
 		if fluence_frac is True:
 			dur_arr /= F_true
-		
+
 		F_max = np.log10(F_max)
-		F_min = -1
+		F_min = np.min([-1,np.log10(np.min(results['FLUENCE']))])
 
 		im = ax.hist2d(results['z'], dur_arr, range= [[0, z_max*1.1], [F_min, F_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
 
@@ -375,9 +386,10 @@ class PLOTSIMRES(PLOTS):
 
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 
-		ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="w", linestyle="dashed", alpha=0.5)
+		ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="w", linestyle="dashed", alpha=0.5) # 1/distance^2 line 
+		ax.plot(z_vals, np.log10(fluence_sens(t_vals)), color="g", linestyle="dashed") # 5-sigma fluence limit 
 		ax.set_ylabel(r"log(Photon Fluence) log(cnts cm$^{-2}$)",fontsize=self.fontsize,fontweight=self.fontweight)
-		ax.set_ylim(-1)
+		ax.set_ylim(F_min)
 
 		ax.set_xlim(0, z_max*1.1)
 
@@ -398,8 +410,9 @@ class PLOTSAMPLE(PLOTS):
 			ax = plt.figure().gca()
 		fig = plt.gcf()
 
-		norm =1
+		norm = 1
 		if normed == True:
+			# norm = np.min(data['DURATION'][data['DURATION']>0])
 			norm = np.max(data['DURATION'])
 
 		if bins is None:
