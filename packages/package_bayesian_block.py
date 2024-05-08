@@ -40,22 +40,25 @@ def bayesian_t_blocks(light_curve, dur_per=90, ncp_prior=6):
 		t_dur_tot = bin_edges[-2] - bin_edges[1]
 		t_start_tot = bin_edges[1]
 
-		## Find TXX
-		emission_interval = light_curve[np.argmax(t_start_tot<=light_curve['TIME']):np.argmax((t_start_tot+t_dur_tot)<=light_curve['TIME'])]
-		if len(emission_interval) == 0:
-			# Then no Bayesian blocks were found.
-			return 0, 0, 0
-		# Find the total fluence 
-		tot_fluence = np.sum(emission_interval['RATE'])
-		# Find the normalized cumulative sum between the total duration 
-		cum_sum_fluence = np.cumsum(emission_interval['RATE'])/tot_fluence
-		# Find the time interval that encompasses dur_per of the burst fluence
-		per_start = ((100 - dur_per)/2)/100
-		per_end = 1 - per_start
-		t_start =  emission_interval['TIME'][np.argmax(per_start <= cum_sum_fluence)]
-		t_end = emission_interval['TIME'][np.argmax(per_end <= cum_sum_fluence)]
+		if dur_per == 100:
+			return t_dur_tot, t_start_tot
+		else:
+			## Find TXX
+			emission_interval = light_curve[np.argmax(t_start_tot<=light_curve['TIME']):np.argmax((t_start_tot+t_dur_tot)<=light_curve['TIME'])]
+			if len(emission_interval) == 0:
+				# Then no Bayesian blocks were found.
+				return 0, 0, 0
+			# Find the total fluence 
+			tot_fluence = np.sum(emission_interval['RATE'])
+			# Find the normalized cumulative sum between the total duration 
+			cum_sum_fluence = np.cumsum(emission_interval['RATE'])/tot_fluence
+			# Find the time interval that encompasses dur_per of the burst fluence
+			per_start = ((100 - dur_per)/2)/100
+			per_end = 1 - per_start
+			t_start =  emission_interval['TIME'][np.argmax(per_start <= cum_sum_fluence)]
+			t_end = emission_interval['TIME'][np.argmax(per_end <= cum_sum_fluence)]
 
-		duration = t_end - t_start
+			duration = t_end - t_start
 
 	return duration, t_start
 

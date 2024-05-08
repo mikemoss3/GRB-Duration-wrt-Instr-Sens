@@ -229,7 +229,7 @@ class GRB(object):
 		if T100_start is not None:
 			self.T100_start = T100_start
 	
-	def cut_light_curve(self, tmin=None, tmax=None):
+	def cut_light_curve(self, tmin=None, tmax=None, buffer=10):
 		"""
 		Method to cut light curve to only the selected interval. 
 		If tmin (tmax) is left as None, the beginning (end) of the light curve is assumed.
@@ -247,7 +247,20 @@ class GRB(object):
 		if tmax is None:
 			tmax = self.light_curve['TIME'][-1]
 
-		self.light_curve = self.light_curve[np.argmax(tmin <= self.light_curve['TIME']):np.argmax(self.light_curve['TIME'] >= tmax)]
+		
+		tmin_buf_ind = np.argmax(self.light_curve['TIME']>=tmin - buffer)  # index at T_min - T_buffer
+		tmax_buf_ind = np.argmax(self.light_curve['TIME']>=tmax+buffer)  # index at T_max + T_buffer
+		self.light_curve = self.light_curve[tmin_buf_ind:tmax_buf_ind]
+
+		tmin_ind = np.argmax(self.light_curve['TIME']>=tmin)  # new index at T_min 
+		tmax_ind = np.argmax(self.light_curve['TIME']>=tmax)  # new index at T_max
+
+		std_pre = np.std(self.light_curve['RATE'][0:tmin_ind])
+		std_post = np.std(self.light_curve['RATE'][tmax_ind:-1])
+
+		self.light_curve[:tmin_ind]['RATE'] = np.random.normal(loc=0, scale= std_pre, size = len(self.light_curve[:tmin_ind]) )
+		self.light_curve[tmax_ind:]['RATE'] = np.random.normal(loc=0, scale= std_post, size = len(self.light_curve[tmax_ind:]) )
+
 
 	def zero_light_curve_selection(self, tmin=None, tmax=None):
 		"""

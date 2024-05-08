@@ -75,10 +75,12 @@ def simulate_observation(template_grb, synth_grb, imx, imy, ndets, resp_mat,
 	synth_grb.light_curve['RATE'] += bgd_rate # counts / sec
 
 	# Apply fluctuations 
-	synth_grb.light_curve['RATE'] = np.random.normal(loc=synth_grb.light_curve['RATE'], scale=np.sqrt(synth_grb.light_curve['RATE'])) # counts / sec
+	synth_grb.light_curve['RATE'] = np.random.normal(loc=synth_grb.light_curve['RATE'], scale=np.sqrt(np.abs(synth_grb.light_curve['RATE']))) # counts / sec
 
 	# Apply mask-weighting to light curve (both the rate and uncertainty)
 	synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets, bgd_rate) # background-subtracted counts / sec / det
+
+	index = np.argwhere(synth_grb.light_curve['RATE']==np.max(synth_grb.light_curve['RATE']))[0][0]
 
 	return synth_grb
 

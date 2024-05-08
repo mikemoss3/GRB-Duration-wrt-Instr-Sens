@@ -86,7 +86,9 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 
 				simulate_observation(template_grb=template_grb, synth_grb = synth_grb, z_p=param_list[i][0],imx=param_list[i][1],imy=param_list[i][2],ndets=param_list[i][3],resp_mat=resp_mat,sim_triggers=sim_triggers,ndet_max=ndet_max,bgd_rate_per_det=bgd_rate_per_det)
 				sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
+				sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
 				sim_results[["FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], sim_results['TSTART'][sim_result_ind])
+				sim_results[["T100FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["T100DURATION"][sim_result_ind], sim_results['T100START'][sim_result_ind])
 
 				# Increase simulation index
 				sim_result_ind +=1
@@ -121,7 +123,9 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 				sim_results[["z","imx","imy","ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
 
 				sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grbs[t], dur_per=dur_per) # Find the Duration and the fluence 
+				sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grbs[t], dur_per=99) # Find the Duration and the fluence 
 				sim_results[["FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grbs[t].light_curve, sim_results["DURATION"][sim_result_ind], sim_results['TSTART'][sim_result_ind])
+				sim_results[["T100FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grbs[t].light_curve, sim_results["T100DURATION"][sim_result_ind], sim_results['T100START'][sim_result_ind])
 				sim_result_ind += 1
 
 			if keep_synth_grbs is True:
@@ -159,7 +163,7 @@ def make_param_list(z_arr, imx_arr, imy_arr, ndets_arr):
 	return param_list
 
 
-def make_ave_sim_res(sim_results):
+def make_ave_sim_res(sim_results, omit_nondetections=True):
 	"""
 	Method to make an average sim_results array for each unique parameter combination
 
@@ -168,6 +172,8 @@ def make_ave_sim_res(sim_results):
 	sim_results : np.ndarray
 		sim_results array 
 	"""
+	if omit_nondetections is True:
+		sim_results = sim_results[sim_results['DURATION']>0]
 
 	unique_rows = np.unique(sim_results[["z","imx","imy","ndets"]])
 
@@ -177,8 +183,12 @@ def make_ave_sim_res(sim_results):
 
 	for i in range(len(unique_rows)):
 		ave_sim_results["DURATION"][i] = np.sum(sim_results["DURATION"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["T100DURATION"][i] = np.sum(sim_results["T100DURATION"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
 		ave_sim_results["TSTART"][i] = np.sum(sim_results["TSTART"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["T100START"][i] = np.sum(sim_results["T100START"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
 		ave_sim_results["FLUENCE"][i] = np.sum(sim_results["FLUENCE"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["T100FLUENCE"][i] = np.sum(sim_results["FLUENCE"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["1sPeakFlux"][i] = np.sum(sim_results["1sPeakFlux"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
 
 	return ave_sim_results
 

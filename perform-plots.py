@@ -7,6 +7,7 @@ from datetime import date
 from packages.class_GRB import GRB
 from packages.class_PLOTS import PLOTSIMRES, PLOTSAMPLE
 from util_packages.package_datatypes import dt_sim_res
+from packages.package_many_simulations import make_ave_sim_res
 
 
 obs_low_z_grbs = np.array([
@@ -197,6 +198,31 @@ def cum_dist_peak_flux():
 
 	# plot.savefig(fname="data_files/figs/2024-04-09/cum_peak_flux_v01.png")
 
+def redshift_dist():
+	plot = PLOTSAMPLE()
+
+	sim_high_z = np.zeros(shape=0, dtype=dt_sim_res)
+	z_array = np.zeros(shape=12, dtype=[("z_min",float),("z_max",float),("numGRBs",int)])
+	z_array['z_min'] = np.linspace(3, 10, num=len(z_array))
+	z_array['z_max'] = np.linspace(3.5, 10.5, num=len(z_array))
+	for i in range(len(obs_low_z_grbs)):
+		grbp = importlib.import_module("data_files.grb_{}.info".format(obs_low_z_grbs[i]), package=None) # Load GRB parameters
+		sim_results = np.load("data_files/results_final/grb_{}_redshift_sim-results.txt.npy".format(grbp.name, grbp.name))
+		unique_z = np.unique(sim_results['z'])
+		for j in range(len(z_array)):
+			if any(unique_z > z_array['z_min'][j]):
+				z_array['numGRBs'][j] += 1
+
+	ax = plt.figure().gca()
+	ax.step(x=z_array['z_min'], y=z_array['numGRBs'], where="post")
+	plot.plot_aesthetics(ax)
+	ax.margins(x=0.1,y=0.1)
+	ax.set_ylim(0)
+	ax.set_xlim(3)
+	from matplotlib.ticker import MaxNLocator
+	ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+	ax.set_xlabel("z", fontsize=14)
+	ax.set_ylabel("Unique GRBs Still Detected", fontsize=14)
 
 def z_evo():
 	for i in range(len(obs_low_z_grbs)):
@@ -206,27 +232,70 @@ def z_evo():
 		plot = PLOTSIMRES() # Plot simulation results
 		plot.redshift_evo(sim_results, t_true=grbp.t_true, log=False)
 
-		# plot.savefig(fname="data_files/figs/z-evo-plots/grb-{}-redshift-evo.png".format(grbp.name))
+		# plot.savefig(fname="data_files/figs/z-evo-plots/grb-{}-redshift-evo.png".format(grbp.name), dpi="figure")
+		# plot.close()
 
 def z_fluence_evo():
 	for i in range(len(obs_low_z_grbs)):
 		grbp = importlib.import_module("data_files.grb_{}.info".format(obs_low_z_grbs[i]), package=None) # Load GRB parameters
 
-		sim_results = np.load("data_files/results_final/grb_{}_redshift_sim-results.txt.npy".format(grbp.name, grbp.name))
+		# sim_results = np.load("data_files/results_final/grb_{}_redshift_sim-results.txt.npy".format(grbp.name, grbp.name))
+		sim_results = np.load("data_files/grb_{}/grb_{}_redshift_sim-results.tmp.txt.npy".format(grbp.name, grbp.name, grbp.name))
 		plot = PLOTSIMRES() # Plot simulation results
 		plot.redshift_fluence_evo(sim_results)
 		
-		# plot.savefig(fname="data_files/figs/2024-04-09/grb-{}-redshift-evo.png".format(grbp.name))
+		# plot.savefig(fname="data_files/figs/z-evo-fluence-plots/grb-{}-redshift-evo.png".format(grbp.name), dpi="figure")
+		# plot.close()
+
+def t90_vs_z_below_2s():
+	
+	plot = PLOTSIMRES()
+	ax = plt.gca()
+	
+	for j in range(len(obs_low_z_grbs)):
+		grbp = importlib.import_module("data_files.grb_{}.info".format(obs_low_z_grbs[j]), package=None) # Load GRB parameters
+		sim_results = np.load("data_files/results_final/grb_{}_redshift_sim-results.txt.npy".format(grbp.name, grbp.name))
+
+		ave_sim_results = make_ave_sim_res(sim_results, omit_nondetections=True)
+
+		if any(ave_sim_results['DURATION']<3):
+			line = plot.dur_vs_param(ave_sim_results, 'z', ax=ax, label=grbp.name, linewidth=1.5, joined=True)
+
+		"""
+		# To use minimum instead of average T90
+		uniq_z = np.unique(sim_results['z'])
+		min_t90 = np.zeros(shape=len(uniq_z), dtype=[("z",float),("DURATION",float)])
+		min_t90['z'] = uniq_z
+		for i in range(len(uniq_z)):
+			min_t90['DURATION'][i] = np.min(sim_results['DURATION'][sim_results['z']==uniq_z[i]])
+
+		if any(min_t90['DURATION']<3):
+			plot.dur_vs_param(min_t90, 'z', ax=ax, label=grbp.name, linestyle="dashed", alpha=0.6, joined=True, color=line.get_color())
+		"""
+
+	ax.axhline(y=2,xmin=0,xmax=1, color="k", linestyle="dashed")
+
+	# ax.set_yscale("log")
+	# ax.set_ylim(0.06)
+	ax.set_ylim(0, 20)
+	ax.legend()
+
+	ax.set_ylabel(r"Measured T$_{90}$", fontsize=14)
+	ax.set_xlabel("z", fontsize=14)
+
+	plot.plot_aesthetics(ax)
 
 
 if __name__ == "__main__":
 
 	# cum_dist_sep()
 	# cum_dist()
-	cum_dist_fluence_sep()
+	# cum_dist_fluence_sep()
 	# cum_dist_peak_flux_sep()
 	# cum_dist_peak_flux()
+	# redshift_dist()
 	# z_evo()
 	# z_fluence_evo()
+	t90_vs_z_below_2s()
 
 	plt.show()

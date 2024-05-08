@@ -76,6 +76,9 @@ class PLOTS(object):
 	def show(self):
 		plt.show()
 
+	def close(self):
+		plt.close()
+
 	def savefig(self, fname, dpi=400):
 		plt.savefig(fname, dpi = dpi)
 
@@ -121,7 +124,7 @@ class PLOTGRB(PLOTS):
 		self.plot_aesthetics(ax)
 
 class PLOTSIMRES(PLOTS):
-	def __init__(self, sim_results=None):
+	def __init__(self):
 		PLOTS.__init__(self)
 
 	def duration_overlay(self, sim_results, light_curve, order_type=2, ax=None, **kwargs):
@@ -164,7 +167,7 @@ class PLOTSIMRES(PLOTS):
 
 		self.plot_aesthetics(ax)
 
-	def dur_vs_param(self, sim_results, obs_param, dur_frac=False, t_true=None, ax=None, marker=".", **kwargs):
+	def dur_vs_param(self, sim_results, obs_param, dur_frac=False, t_true=None, ax=None, marker=".", joined=False, **kwargs):
 		"""
 		Method to plot duration vs observing parameter (e.g., redshift, pcode, ndets)
 
@@ -184,21 +187,26 @@ class PLOTSIMRES(PLOTS):
 			if t_true is None:
 				print("A true duration must be given to create duration fraction axis.")
 				return;
-			sim_results = self.sim_results
 			sim_results['DURATION'] /= t_true
-		else:
-			sim_results = self.sim_results
 
 		if ax is None:
 			ax = plt.figure().gca()
 
-		ax.scatter(sim_results[obs_param],sim_results['DURATION'],marker=marker,**kwargs)
+		if joined is True:
+			line, = ax.step(sim_results[obs_param],sim_results['DURATION'], where="mid", **kwargs)
+		else:
+			line, = ax.scatter(sim_results[obs_param],sim_results['DURATION'],marker=marker,**kwargs)
 
 		ax.set_xlabel("{}".format(obs_param),fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylabel("Duration (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 
+		if "label" in kwargs:
+			ax.legend()
+
 		self.plot_aesthetics(ax)
 		ax.margins(x=0.1,y=0.05)
+
+		return line
 
 	def det_plane_map(self, sim_results, ax=None, imx_max=1.75*1.1, imy_max=0.875*1.1, inc_grids=False, **kwargs):
 		"""
@@ -284,7 +292,8 @@ class PLOTSIMRES(PLOTS):
 		cmap.set_bad(color="w")
 		cmin=1e-20
 		cmin=0
-
+		ax.set_facecolor(cmap(0))
+		
 		dur_arr = results["DURATION"]
 		if dur_frac is True:
 			dur_arr /= t_true
@@ -294,7 +303,7 @@ class PLOTSIMRES(PLOTS):
 			t_max = np.log10(t_max)
 			t_min = -1
 
-		im = ax.hist2d(results['z'], dur_arr, range= [[0, z_max*1.1], [t_min, t_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
+		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
 
 		# if (t_true is not None):
 		# 	if (dur_frac is False):
@@ -370,6 +379,7 @@ class PLOTSIMRES(PLOTS):
 		cmap.set_bad(color="w")
 		cmin=1e-20
 		cmin=0
+		ax.set_facecolor(cmap(0))
 
 		dur_arr = results["FLUENCE"]
 		dur_arr = np.log10(dur_arr)
@@ -379,7 +389,7 @@ class PLOTSIMRES(PLOTS):
 		F_max = np.log10(F_max)
 		F_min = np.min([-1,np.log10(np.min(results['FLUENCE']))])
 
-		im = ax.hist2d(results['z'], dur_arr, range= [[0, z_max*1.1], [F_min, F_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
+		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [F_min, F_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
 
 		ax.axvline(x=z_min,color="r",linestyle="dashed",alpha=0.5,label="Measured Redshift")
 		ax.axvline(x=z_max,color="r",linestyle="dashed",alpha=0.5,label="Max. Simulated Redshift")
@@ -387,7 +397,7 @@ class PLOTSIMRES(PLOTS):
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 
 		ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="w", linestyle="dashed", alpha=0.5) # 1/distance^2 line 
-		ax.plot(z_vals, np.log10(fluence_sens(t_vals)), color="g", linestyle="dashed") # 5-sigma fluence limit 
+		# ax.plot(z_vals, np.log10(fluence_sens(t_vals)), color="g", linestyle="dashed") # 5-sigma fluence limit 
 		ax.set_ylabel(r"log(Photon Fluence) log(cnts cm$^{-2}$)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylim(F_min)
 
@@ -494,7 +504,6 @@ class PLOTSAMPLE(PLOTS):
 		ax.set_title("1s Peak Flux Distrubtion", fontsize=self.fontsize)
 
 		self.plot_aesthetics(ax)
-
 
 	def _make_cumu_plot(self, values, bins, ax, **kwargs):
 

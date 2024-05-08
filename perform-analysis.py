@@ -24,7 +24,7 @@ def make_template_grb(grbp):
 	template_grb = GRB(grbname = grbp.name, z=grbp.z)
 	# Load light curve 
 	template_grb.load_light_curve(grbp.fn, rm_trigtime=True, det_area=0.16)
-	template_grb.cut_light_curve(tmin=grbp.t_cut_min, tmax=grbp.t_cut_max)
+	template_grb.cut_light_curve(tmin=grbp.t_cut_min, tmax=grbp.t_cut_max, buffer=grbp.t_buffer)
 	# Load spectrum
 	template_grb.load_specfunc(CPL(alpha= grbp.alpha, ep=grbp.ep, norm=grbp.norm, enorm=50))
 
@@ -46,49 +46,47 @@ def make_param_space(grbp):
 
 def main(name, template_grb, param_list, trials):
 
+	# sim_results, synth_grbs = many_simulations(template_grb, param_list, trials, multiproc=False, keep_synth_grbs=True, verbose=True)
 	sim_results = many_simulations(template_grb, param_list, trials, multiproc=False, keep_synth_grbs=False, verbose=True)
-	ave_sim_results = make_ave_sim_res(sim_results)
 
 	np.save("data_files/grb_{}/grb_{}_redshift_sim-results.tmp.txt".format(name, name), sim_results)
-	np.save("data_files/grb_{}/grb_{}_redshift_ave-sim-results.tmp.txt".format(name, name), ave_sim_results)
 
 	# np.save("data-files/grb-{}/grb_{}_detector_sim-results.tmp.txt".format(name, name), sim_results)
-	# np.save("data-files/grb-{}/grb_{}_detector_ave-sim-results.tmp.txt".format(name, name), ave_sim_results)
 	
-	sim_results, synth_grbs = many_simulations(template_grb, param_list, trials, multiproc=False, keep_synth_grbs=True, verbose=True)
-	return synth_grbs
+	# return synth_grbs
 
 
 if __name__ == "__main__":
 
 	grbs_names = np.array([
-		# "050416A",
-		# "050525A",
-		# "060614",
-		# "060912A",
-		# "061021",
-		# "080430",
-		# "080916A",
-		# "081007",
-		# "090424",
-		# "091018",
-		# "091127",
-		# "100621A",
-		# "100625A",
-		# "100816A",
-		# "101219A",
-		# "110715A",
-		# "111228A",
-		# "120311A",
+		"050416A",
+		"050525A",
+		"060614",
+		"060912A",
+		"061021",
+		"080430",
+		"080916A",
+		"081007",
+		"090424",
+		"091018",
+		"091127",
+		"100621A",
+		"100625A",
+		"100816A",
+		"101219A",
+		"110715A",
+		"111228A",
+		"120311A",
 		"130427A",
-		# "130603B",
-		# "130925A",
-		# "140506A",
-		# "160425A",
-		# "160804A",
-		# "161001A",
-		# "161219B",
-		], dtype="U10")
+		"130427A_cut",
+		"130603B",
+		"130925A",
+		"140506A",
+		"160425A",
+		"160804A",
+		"161001A",
+		"161219B",
+		], dtype="U11")
 
 
 	for i in range(len(grbs_names)):
@@ -100,3 +98,4 @@ if __name__ == "__main__":
 		trials = 1000
 
 		synth_grbs = main(grbp.name, template_grb, param_list, trials) # Run simulations
+
