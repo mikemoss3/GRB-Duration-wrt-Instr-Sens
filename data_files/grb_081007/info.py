@@ -5,8 +5,9 @@ z = 0.5295 # Measured redshift
 zmax = 2. # Highest redshift to simulate at
 
 t_true = 12.5 # true T90
-t_cut_min = -10 # cut data before this time 
-t_cut_max = 8 # cut data after this time
+t_start = -4 # start true T90
+t_cut_min = -8 # cut data before this time 
+t_cut_max = 20 # cut data after this time
 t_buffer = 20 # buffer time added before and 
 F_true = 1.336 # total mask-weighted counts in T100 
 

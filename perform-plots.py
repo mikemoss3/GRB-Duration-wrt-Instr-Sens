@@ -11,33 +11,34 @@ from packages.package_many_simulations import make_ave_sim_res
 
 
 obs_low_z_grbs = np.array([
-	"050416A",
-	"050525A",
-	"060614",
-	"060912A",
-	"061021",
-	"080430",
-	"080916A",
-	"081007",
-	"090424",
-	"091018",
-	"091127",
-	"100621A",
-	"100625A",
-	"100816A",
-	"101219A",
-	"110715A",
-	"111228A",
-	"120311A",
-	"130427A",
-	"130603B",
-	"130925A",
-	"140506A",
-	"160425A",
-	"160804A",
-	"161001A",
+	# "050416A",
+	# "050525A",
+	# "060614",
+	# "060912A",
+	# "061021",
+	# "080430",
+	# "080916A",
+	# "081007",
+	# "090424",
+	# "091018",
+	# "091127",
+	# "100621A",
+	# "100625A",
+	# "100816A",
+	# "101219A",
+	# "110715A",
+	# "111228A",
+	# "120311A",
+	# "130427A",
+	# "130427A_cut",
+	# "130603B",
+	# "130925A",
+	# "140506A",
+	# "160425A",
+	# "160804A",
+	# "161001A",
 	"161219B",
-	], dtype="U10")
+	], dtype="U11")
 
 obs_high_z_grbs = np.array([
 	"060206", 
@@ -228,7 +229,8 @@ def z_evo():
 	for i in range(len(obs_low_z_grbs)):
 		grbp = importlib.import_module("data_files.grb_{}.info".format(obs_low_z_grbs[i]), package=None) # Load GRB parameters
 
-		sim_results = np.load("data_files/results_final/grb_{}_redshift_sim-results.txt.npy".format(grbp.name, grbp.name))
+		# sim_results = np.load("data_files/results_final/grb_{}_redshift_sim-results.txt.npy".format(grbp.name, grbp.name))
+		sim_results = np.load("data_files/grb_{}/grb_{}_redshift_sim-results.tmp.txt.npy".format(grbp.name, grbp.name, grbp.name))
 		plot = PLOTSIMRES() # Plot simulation results
 		plot.redshift_evo(sim_results, t_true=grbp.t_true, log=False)
 
@@ -294,8 +296,8 @@ if __name__ == "__main__":
 	# cum_dist_peak_flux_sep()
 	# cum_dist_peak_flux()
 	# redshift_dist()
-	# z_evo()
-	# z_fluence_evo()
-	t90_vs_z_below_2s()
+	z_evo()
+	z_fluence_evo()
+	# t90_vs_z_below_2s()
 
 	plt.show()

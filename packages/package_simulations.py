@@ -14,11 +14,12 @@ from util_packages.package_det_ang_dependence import find_pcode, find_inc_ang, f
 
 def simulate_observation(template_grb, synth_grb, imx, imy, ndets, resp_mat,
 	z_p=0, sim_triggers=False,
-	ndet_max=32768, bgd_rate_per_det=0.3, area_per_det = 0.16, band_rate_min=15,band_rate_max=350):
+	ndet_max=32768, bgd_rate_per_det=0.3, band_rate_min=14, band_rate_max=350):
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
 
 	Attributes:
+	------------------------
 	template_grb : GRB 
 		GRB class object that holds the source frame information of the template GRB
 	synth_grb : GRB 
@@ -37,9 +38,11 @@ def simulate_observation(template_grb, synth_grb, imx, imy, ndets, resp_mat,
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
 	bdg_rate_per_det : float 
 		Background level to be added to the synthetic light curve
-	area_per_det : float
-		Area of a single detector element in cm^2
 	"""
+
+	import matplotlib.pyplot as plt
+	from astropy.io import fits
+
 
 	# Initialize synth_GRB
 	synth_grb.imx, synth_grb.imy = imx, imy
@@ -49,38 +52,58 @@ def simulate_observation(template_grb, synth_grb, imx, imy, ndets, resp_mat,
 	synth_grb.move_to_new_frame(z_o=template_grb.z, z_p=z_p)
 
 	# Calculate the fraction of the detectors currently enabled 
-	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
+	# det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
-	folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / sec / keV (/cm^2?)
-	rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec  (/cm^2?)
+	# folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / sec / keV
+	# rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec
 
 	# Using the total count rate from the spectrum and the relative flux level of the light curve, make a new light curve
 	# The synthetic GRB light curve technically has units of counts / sec / cm^2, but we are only using it as a template for relative flux values. 
 	# The actual flux is set by the band rate, which is in units of counts / sec 
-	synth_grb.light_curve['RATE'] = synth_grb.light_curve['RATE'] * rate_in_band # counts / sec
-	synth_grb.light_curve['UNC'] = synth_grb.light_curve['UNC'] * rate_in_band
-
-	# print(np.max(synth_GRB.light_curve['RATE']))
-
-	# This might not be the most ideal place to remove negative counts. 
-	# synth_grb.light_curve['RATE'][synth_grb.light_curve['RATE']<0]*=0
-	# synth_grb.light_curve['UNC'][synth_grb.light_curve['RATE']<0]*=0
+	# synth_grb.light_curve['RATE'] = synth_grb.light_curve['RATE'] * rate_in_band # counts / sec
 
 	# If we are testing the trigger algorithm:
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
 		# Calculate the fraction of the quadrant exposure 
 
-	# Add background to light curve 
-	bgd_rate = bgd_rate_per_det * ndets / synth_grb.dt  # counts / sec
-	synth_grb.light_curve['RATE'] += bgd_rate # counts / sec
+	# Define background rate
+	# bgd_rate = bgd_rate_per_det * ndets / synth_grb.dt # counts / sec
+	# synth_grb.light_curve = add_background(synth_grb.light_curve, bgd_rate=bgd_rate, buffer=200, dt=synth_grb.dt)
 
 	# Apply fluctuations 
-	synth_grb.light_curve['RATE'] = np.random.normal(loc=synth_grb.light_curve['RATE'], scale=np.sqrt(np.abs(synth_grb.light_curve['RATE']))) # counts / sec
+	# synth_grb.light_curve['RATE'] = np.random.normal(loc=synth_grb.light_curve['RATE'], scale=np.sqrt(synth_grb.light_curve['RATE'])) # counts / sec
 
 	# Apply mask-weighting to light curve (both the rate and uncertainty)
-	synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets, bgd_rate) # background-subtracted counts / sec / det
+	# synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets, bgd_rate) # background-subtracted counts / sec / det
+	
 
-	index = np.argwhere(synth_grb.light_curve['RATE']==np.max(synth_grb.light_curve['RATE']))[0][0]
+	### This is a work around until I can figure out how to properly mask-weight the background ###
+	# Determine length of simulated light curve: time-dilated duration of the template light curve + a buffer interval on either side. 
+	time_dilated_template_duration = (template_grb.light_curve['TIME'][-1]-template_grb.light_curve['TIME'][0]) * (1+z_p)/(1+template_grb.z)
+	# The length is determined by the light curve time bin size
+	sim_lc_length = int( (time_dilated_template_duration + 2*template_grb.t_buffer)/template_grb.dt)
+
+	# Initialize an empty light curve to hold the simulated light curve 
+	empty = np.zeros(shape=sim_lc_length, dtype=[('TIME', float), ('RATE',float), ('UNC',float)])
+	# Fill the time axis from -buffer to buffer+time_dilated_template_duration with correct time bin sizes 
+	empty['TIME'] = np.arange(start=-template_grb.t_buffer, stop= template_grb.t_buffer + (template_grb.light_curve['TIME'][-1]-template_grb.light_curve['TIME'][0])*(1+z_p)/(1+template_grb.z), step=template_grb.dt)[:len(empty)]
+
+	# Use the standard deviation of the mask-weighted light curves to fluctuate the RATEs according to a Guassian
+	if template_grb.dt == 1:
+		std = 0.1 
+	if template_grb.dt < 1:
+		# i.e., if it's 64ms
+		std = 0.4
+
+	empty['RATE'] = np.random.normal( loc=np.zeros(shape=len(empty)), scale=std)
+	# Set the uncertainty of the count rate to the standard deviation. 
+	empty['UNC'] = np.ones(shape=len(empty))*std
+
+	len_sim = len(synth_grb.light_curve['RATE'])
+	argstart = np.argmax(empty['TIME']>=template_grb.t_start)
+	empty[argstart: argstart+len_sim]['RATE'] += synth_grb.light_curve['RATE']
+
+	synth_grb.light_curve = empty
 
 	return synth_grb
 
@@ -104,7 +127,7 @@ def apply_mask_weighting(light_curve, imx, imy, ndets, bgd_rate):
 	"""
 
 	# Rough calculation of the background standard deviation 
-	stdev_backgroud = np.sqrt(np.mean(light_curve['RATE'][0:20]))
+	stdev_backgroud = np.sqrt(bgd_rate)
 
 	# From imx and imy, find pcode and the angle of incidence
 	pcode = find_pcode(imx, imy)
@@ -120,10 +143,43 @@ def apply_mask_weighting(light_curve, imx, imy, ndets, bgd_rate):
 		return light_curve
 
 	# Use error propagation to calculate the uncertainty in the RATE for the mask-weight light curve
-	light_curve['UNC'] = np.sqrt( light_curve['RATE']/np.power(correction,2.)+np.power(stdev_backgroud/correction,2.))
+	light_curve['UNC'] = np.sqrt( np.power(np.sqrt(light_curve['RATE'])/correction,2.)+np.power(stdev_backgroud/correction,2.))
 	# Calculate the mask-weighted RATE column
 	light_curve['RATE'] = (light_curve["RATE"] - bgd_rate)/correction # background-subtracted counts / sec / dets
 
 
 	return light_curve
 
+def add_background(light_curve, bgd_rate, buffer, dt):
+	"""
+	Method to add a buffer interval and a flat background to a given light curve
+
+	Attributes:
+	------------------------
+	light_curve : np.ndarray([("TIME",float), ("RATE",float), ("UNC",float)])
+		Light curve array
+	bgd_rate : float
+		Background rate (counts / sec) to be added to light curve 
+	buffer : float
+		Duration (sec) of the background interval to be added to either side of the existing light curve
+	dt : float
+		time bin size
+	"""
+
+	old_lc_size = len(light_curve)
+	old_time_start = light_curve['TIME'][0]
+	old_time_end = light_curve['TIME'][-1]
+	buffer_size = int(np.floor(buffer/dt))
+
+	# Add buffer interval to light curve 
+	buffer_interval = np.zeros(shape=buffer_size, dtype=[('TIME',float), ('RATE',float), ('UNC',float)])
+	light_curve = np.concatenate( (buffer_interval, light_curve, buffer_interval), axis=0) 
+
+	# Fill time axis value
+	light_curve['TIME'][:buffer_size] = np.arange(old_time_start - buffer, old_time_start, step=dt)[:buffer_size]
+	light_curve['TIME'][buffer_size+old_lc_size:] = np.arange(old_time_end+dt, old_time_end+buffer+dt, step=dt)[:buffer_size]
+
+	# Add flat background
+	light_curve['RATE'] += bgd_rate
+
+	return light_curve

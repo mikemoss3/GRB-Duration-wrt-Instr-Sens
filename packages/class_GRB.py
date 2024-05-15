@@ -187,33 +187,22 @@ class GRB(object):
 
 		return spectrum
 
-	def load_light_curve(self, file_name, inc_unc = True,t_offset=0,rm_trigtime=False,T100_dur=None,T100_start=None,det_area=None):
+	def load_light_curve(self, file_name, t_offset=0,rm_trigtime=False,T100_dur=None,T100_start=None,det_area=None):
 		"""
 		Method to load a light curve from either a .fits or .txt file
 		"""
 
 		# Check if this is a fits file or a text file 
 		if file_name.endswith(".lc") or file_name.endswith(".fits"):
-			if inc_unc is False:
-				tmp_light_curve = fits.getdata(file_name,ext=1)
-				self.light_curve = np.zeros(shape=len(tmp_light_curve),dtype=[('TIME',float),('RATE',float)])
-				self.light_curve['TIME'] = tmp_light_curve['TIME']
-				if rm_trigtime is True:
-						self.light_curve['TIME']-=fits.getheader(file_name,ext=0)['TRIGTIME']
-				self.light_curve['RATE'] = tmp_light_curve['RATE']
-			else:
-				tmp_light_curve = fits.getdata(file_name,ext=1)
-				self.light_curve = np.zeros(shape=len(tmp_light_curve),dtype=[('TIME',float),('RATE',float),('UNC',float)])
-				self.light_curve['TIME'] = tmp_light_curve['TIME']
-				if rm_trigtime is True:
-						self.light_curve['TIME']-=fits.getheader(file_name,ext=0)['TRIGTIME']
-				self.light_curve['RATE'] = tmp_light_curve['RATE']
-				self.light_curve['UNC'] = tmp_light_curve['ERROR']
+			tmp_light_curve = fits.getdata(file_name,ext=1)
+			self.light_curve = np.zeros(shape=len(tmp_light_curve),dtype=[('TIME',float),('RATE',float),('UNC',float)])
+			self.light_curve['TIME'] = tmp_light_curve['TIME']
+			if rm_trigtime is True:
+					self.light_curve['TIME']-=fits.getheader(file_name,ext=0)['TRIGTIME']
+			self.light_curve['RATE'] = tmp_light_curve['RATE']
+			self.light_curve['UNC'] = tmp_light_curve['ERROR']
 		elif file_name.endswith(".txt"):
-			if inc_unc is False:
-				self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float)])
-			else:
-				self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float),('UNC',float)])
+			self.light_curve = np.genfromtxt(file_name,dtype=[('TIME',float),('RATE',float),('UNC',float)])
 
 		# Time bin size
 		self.dt = (self.light_curve['TIME'][1] - self.light_curve['TIME'][0])
@@ -221,6 +210,7 @@ class GRB(object):
 		# Correct for the size of a detector
 		if det_area is not None:
 			self.light_curve['RATE'] /= det_area
+			self.light_curve['UNC'] /= det_area
 
 		if t_offset != 0:
 			self.light_curve['TIME'] -= t_offset
@@ -228,6 +218,7 @@ class GRB(object):
 			self.T100_dur = T100_dur
 		if T100_start is not None:
 			self.T100_start = T100_start
+
 	
 	def cut_light_curve(self, tmin=None, tmax=None):
 		"""

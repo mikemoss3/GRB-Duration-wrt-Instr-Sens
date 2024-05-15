@@ -57,8 +57,6 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 	if keep_synth_grbs is True:
 		synth_grb_arr = np.zeros(shape=len(param_list),dtype=GRB)
 
-	synth_grb = template_grb.copy() # Copies light curve and spectrum
-
 	if verbose is True:
 		print("Tot number of param combinations for GRB {} = {} ".format( template_grb.grbname ,len(param_list)) )
 
@@ -107,7 +105,7 @@ def many_simulations(template_grb, param_list, trials, dur_per = 90,
 			synth_grbs = np.zeros(shape=trials, dtype=GRB)
 			# resp_mat_list = np.zeros(shape=trials, dtype=ResponseMatrix)
 			for t in range(trials):
-				synth_grbs[t] = synth_grb.copy()
+				synth_grbs[t] = template_grb.copy()
 				# resp_mat_list[t] = ResponseMatrix()
 				# resp_mat_list[t].load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
 			

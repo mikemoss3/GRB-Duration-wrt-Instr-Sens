@@ -5,9 +5,10 @@ z = 0.452 # Measured redshift
 zmax = 2.0 # Highest redshift to simulate at
 
 t_true = 16.34 # true T90
+t_start = -0.048 # start true T90
 t_cut_min = -2 # cut data before this time 
-t_cut_max = 2 # cut data after this time
-t_buffer = 12 # buffer time added before and 
+t_cut_max = 23 # cut data after this time
+t_buffer = 30 # buffer time added before and 
 F_true = 0.284 # total mask-weighted counts in T100 
 
 # Best fit cut-off power law info:

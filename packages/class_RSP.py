@@ -352,7 +352,7 @@ def make_en_axis(Emin,Emax,num_en_bins):
 	en_axis['Emid'] = (en_axis['Ehi'] + en_axis['Elo'])/2
 	return en_axis
 
-def make_folded_spec(source_spec_func,rsp):
+def make_folded_spec(source_spec_func, rsp):
 	""" 
 	Convolve spectral function with instrument response to obtain observed spectrum
 

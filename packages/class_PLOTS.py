@@ -86,7 +86,7 @@ class PLOTGRB(PLOTS):
 	def __init__(self, grb=None):
 		PLOTS.__init__(self)
 
-	def plot_light_curves(self, grbs, t_window=None, labels=None, ax=None, alpha=0.7, **kwargs):
+	def plot_light_curves(self, grbs, t_window=None, labels=None, ax=None, alpha=0.7, norm=1, **kwargs):
 		"""
 		Method to plot the average duration percentage as a function of the position on the detector plane
 
@@ -105,12 +105,12 @@ class PLOTGRB(PLOTS):
 		if hasattr(grbs,'__len__'):
 			for i in range(len(grbs)):
 				if labels is None:
-					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
+					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE']*norm,yerr=grbs[i].light_curve['UNC']*norm,fmt="",drawstyle="steps-mid",alpha=alpha,**kwargs)
 				else:
-					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE'],yerr=grbs[i].light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
+					ax.errorbar(x=grbs[i].light_curve['TIME'],y=grbs[i].light_curve['RATE']*norm,yerr=grbs[i].light_curve['UNC']*norm,fmt="",drawstyle="steps-mid",alpha=alpha,label="{}".format(labels[i]),**kwargs)
 		# For a single GRB
 		else:
-			ax.errorbar(x=grbs.light_curve['TIME'],y=grbs.light_curve['RATE'],yerr=grbs.light_curve['UNC'],fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)
+			ax.errorbar(x=grbs.light_curve['TIME'],y=grbs.light_curve['RATE']*norm,yerr=grbs.light_curve['UNC']*norm,fmt="",drawstyle="steps-mid",alpha=alpha,label=labels,**kwargs)
 
 		ax.set_xlabel("Time (sec)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylabel("Rate (counts/sec)",fontsize=self.fontsize,fontweight=self.fontweight)

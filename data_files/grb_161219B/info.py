@@ -2,12 +2,13 @@ name = "161219B"
 fn = "data_files/grb_161219B/grb_161219B_1chan_64ms.lc" # file path to light curve
 
 z = 0.148 # Measured redshift 
-zmax = 1.5 # Highest redshift to simulate at
+zmax = 0.7 # Highest redshift to simulate at
 
 t_true = 21.80 # true T90
+t_start = 0.048 # start true T90
 t_cut_min = -2 # cut data before this time 
-t_cut_max = 10 # cut data after this time
-t_buffer = 25 # buffer time added before and 
+t_cut_max = 25 # cut data after this time
+t_buffer = 30 # buffer time added before and 
 F_true = 2.568 # total mask-weighted counts in T100 
 
 # Best fit cut-off power law info:
