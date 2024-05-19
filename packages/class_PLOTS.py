@@ -366,13 +366,13 @@ class PLOTSIMRES(PLOTS):
 
 		# Swift/BAT 5-sigma Fluence sensitivity line (see Baumgartner 2013)
 		def fluence_sens(time):
-			return 1.18 * 2.4*10**(-2) * time**(1./2.)
+			return 1.18 * 2.4*10**(-2) * time**(1./2.) / 0.16
 
 		z_vals = np.unique(sim_results['z'])
 		t_vals = np.zeros(shape=len(z_vals))
 		for i in range(len(z_vals)):
-			t_vals[i] = np.mean(results['DURATION'][results['z']==z_min]) * (1+z_vals[i])
-			# t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
+			# t_vals[i] = np.mean(results['DURATION'][results['z']==z_min]) * (1+z_vals[i])
+			t_vals[i] = np.mean(results['DURATION'][results['z']==z_vals[i]])
 			# t_vals[i] = np.min(results['DURATION'][results['z']==z_vals[i]])
 
 		cmap = plt.cm.get_cmap("viridis").copy()
@@ -397,7 +397,7 @@ class PLOTSIMRES(PLOTS):
 		ax.set_xlabel("Redshift",fontsize=self.fontsize,fontweight=self.fontweight)
 
 		ax.plot(z_arr, np.log10(luminosity_distance(z_arr)), color="w", linestyle="dashed", alpha=0.5) # 1/distance^2 line 
-		# ax.plot(z_vals, np.log10(fluence_sens(t_vals)), color="g", linestyle="dashed") # 5-sigma fluence limit 
+		ax.plot(z_vals, np.log10(fluence_sens(t_vals)), color="g", linestyle="dashed") # 5-sigma fluence limit 
 		ax.set_ylabel(r"log(Photon Fluence) log(cnts cm$^{-2}$)",fontsize=self.fontsize,fontweight=self.fontweight)
 		ax.set_ylim(F_min)
 
