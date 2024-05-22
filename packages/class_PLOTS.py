@@ -300,8 +300,8 @@ class PLOTSIMRES(PLOTS):
 		t_min = 0
 		if log is True:
 			dur_arr = np.log10(dur_arr)
-			t_max = np.log10(t_max)
-			t_min = -1
+			t_max = np.log10(t_max)+1
+			t_min = 0
 
 		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [t_min, t_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
 
@@ -368,7 +368,7 @@ class PLOTSIMRES(PLOTS):
 		def fluence_sens(time):
 			return 1.18 * 2.4*10**(-2) * time**(1./2.) / 0.16
 
-		z_vals = np.unique(sim_results['z'])
+		z_vals = np.unique(sim_results['z'][sim_results['DURATION']>0])
 		t_vals = np.zeros(shape=len(z_vals))
 		for i in range(len(z_vals)):
 			# t_vals[i] = np.mean(results['DURATION'][results['z']==z_min]) * (1+z_vals[i])
@@ -387,7 +387,8 @@ class PLOTSIMRES(PLOTS):
 			dur_arr /= F_true
 
 		F_max = np.log10(F_max)
-		F_min = np.min([-1,np.log10(np.min(results['FLUENCE']))])
+		# F_min = np.min([-1,np.log10(np.min(results['FLUENCE']))])
+		F_min = -1
 
 		im = ax.hist2d(results['z'], dur_arr, range= [[z_min, z_max], [F_min, F_max]], bins=50, cmin=cmin, cmap=cmap, **kwargs)
 
@@ -455,7 +456,7 @@ class PLOTSAMPLE(PLOTS):
 
 		if bins is None:
 			if bin_min is None:
-				bin_min	= 0.01
+				bin_min	= 1
 			if bin_max is None:
 				bin_max = np.max(data['FLUENCE']) 
 
