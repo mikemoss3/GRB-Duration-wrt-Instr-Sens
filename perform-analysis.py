@@ -15,7 +15,7 @@ from datetime import date
 from packages.class_GRB import GRB
 from packages.class_PLOTS import PLOTSIMRES, PLOTSAMPLE, PLOTGRB
 from packages.class_SPECFUNC import PL, CPL
-from packages.package_many_simulations import many_simulations, make_param_list, make_ave_sim_res
+from packages.package_simulations import many_simulations, make_param_list, make_ave_sim_res
 from util_packages.package_datatypes import dt_sim_res
 
 def make_template_grb(grbp):

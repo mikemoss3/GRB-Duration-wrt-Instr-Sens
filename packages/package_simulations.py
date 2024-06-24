@@ -2,20 +2,24 @@
 Author: Mike Moss
 Contact: mikejmoss3@gmail.com	
 
-Defines all the functions necessary to simulate an observation of a GRB using an input template, designated instrument response, and observing conditions 
-
+This package defines functions used to obtain the duration and fluence measurements for simulated GRBs
 """
 
 import numpy as np
 from scipy.stats import rv_discrete
+
 from packages.class_GRB import GRB
 from packages.class_RSP import ResponseMatrix
+from packages.package_bayesian_block import bayesian_t_blocks
+from packages.package_fluence import calc_fluence
+from util_packages.package_datatypes import dt_sim_res
 from util_packages.package_det_ang_dependence import find_pcode, find_inc_ang, fraction_correction
 
 
-def simulate_observation(template_grb, synth_grb, imx, imy, ndets, resp_mat,
-	z_p=0, sim_triggers=False,
-	ndet_max=32768, bgd_rate_per_det=0.3, band_rate_min=14, band_rate_max=350):
+def simulate_observation(synth_grb, template_grb, resp_mat, 
+	imx, imy, ndets, 
+	z_p=0, ndet_max=32768, band_rate_min=14, band_rate_max=350, 
+	sim_triggers=False):
 	"""
 	Method to complete a simulation of a synthetic observation based on the input source frame GRB template and the desired observing conditions
 
@@ -25,27 +29,23 @@ def simulate_observation(template_grb, synth_grb, imx, imy, ndets, resp_mat,
 		GRB class object that holds the source frame information of the template GRB
 	synth_grb : GRB 
 		GRB class object that will hold the simulated light curve
-	imx, imy : 	float, float 
-		The x and y position of the GRB on the detector plane
 	resp_mat : RSP
 		Response matrix to convolve the template spectrum with. If no response matrix is given, a Swift/BAT response matrix is assumed from the given imx, imy
+	imx, imy : 	float, float 
+		The x and y position of the GRB on the detector plane
 	ndets : int
 		Number of detectors enabled during the synthetic observation 
 	z_p : float 
 		Redshift of synthetic GRB
-	sim_triggers : boolean
-		Whether or not to simulate the Swift/BAT trigger algorithms or not
 	ndet_max : int
 		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
-	bdg_rate_per_det : float 
-		Background level to be added to the synthetic light curve
+	band_rate_min, band_rate_max : float, float
+		Minimum and maximum of the energy band over which to calculate source photon flux
+	sim_triggers : boolean
+		Whether or not to simulate the Swift/BAT trigger algorithms or not
 	"""
 
-	import matplotlib.pyplot as plt
-	from astropy.io import fits
-
-
-	# Initialize synth_GRB
+	# Initialize synthetic GRB
 	synth_grb.imx, synth_grb.imy = imx, imy
 	synth_grb.z = z_p
 
@@ -55,6 +55,7 @@ def simulate_observation(template_grb, synth_grb, imx, imy, ndets, resp_mat,
 	# Calculate the fraction of the detectors currently enabled 
 	det_frac = ndets / ndet_max # Current number of enabled detectors divided by the maximum number of possible detectors
 
+	# Fold spectrum through instrument response and calculate the count rate in the observation band
 	folded_spec = resp_mat.fold_spec(synth_grb.specfunc)  # counts / sec / keV
 	rate_in_band = band_rate(folded_spec, band_rate_min, band_rate_max) * det_frac # counts / sec
 
@@ -67,35 +68,11 @@ def simulate_observation(template_grb, synth_grb, imx, imy, ndets, resp_mat,
 		# Modulate the light curve by the folded spectrum normalization for each energy band 
 		# Calculate the fraction of the quadrant exposure 
 
-	# Apply mask-weighting to light curve (both the rate and uncertainty)
-	synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets, 0) # background-subtracted counts / sec / det
+	# Apply mask-weighting approximation to source signal
+	synth_grb.light_curve = apply_mask_weighting(synth_grb.light_curve, imx, imy, ndets) # counts / sec / det
 
-	# The length is determined by the light curve time bin size
-	sim_lc_length = int( (2*template_grb.t_buffer/template_grb.dt) + len(synth_grb.light_curve) )
-
-	# Initialize an empty light curve to hold the simulated light curve 
-	empty = np.zeros(shape=sim_lc_length, dtype=[('TIME', float), ('RATE',float), ('UNC',float)])
-	# Fill the time axis from synth_grb-buffer to synth_grb+buffer with correct time bin sizes 
-	empty['TIME'] = np.arange(
-		start=synth_grb.light_curve['TIME'][0]-template_grb.t_buffer, 
-		stop= synth_grb.light_curve['TIME'][-1]+template_grb.t_buffer+template_grb.dt, 
-		step=template_grb.dt
-		)[:len(empty)]
-
-	# Pull a random background variance from the distribution created observed values
-	variance = rand_background_variance()
-	# Correct for time-bin size
-	variance /= np.sqrt(template_grb.dt)
-
-	empty['RATE'] = np.random.normal( loc=np.zeros(shape=len(empty)), scale=variance)
-	# Set the uncertainty of the count rate to the standard deviation. 
-	empty['UNC'] = np.ones(shape=len(empty))*variance
-
-	len_sim = len(synth_grb.light_curve['RATE'])
-	argstart = np.argmax(empty['TIME']>=synth_grb.light_curve['TIME'][0])
-	empty[argstart: argstart+len_sim]['RATE'] += synth_grb.light_curve['RATE']
-
-	synth_grb.light_curve = empty
+	# Add mask-weighted background to either side of mask-weighted source signal
+	synth_grb.light_curve = add_background(synth_grb.light_curve, t_buffer=template_grb.t_buffer, dt = template_grb.dt)
 
 	return synth_grb
 
@@ -106,10 +83,10 @@ def band_rate(spectrum,emin,emax):
 
 	return np.sum(spectrum['RATE'][np.argmax(spectrum['ENERGY']>=emin):np.argmax(spectrum['ENERGY']>=emax)])
 
-
-def apply_mask_weighting(light_curve, imx, imy, ndets, bgd_rate):
+def apply_mask_weighting(light_curve, imx, imy, ndets):
 	"""
 	Method to apply mask weighting to a light curve assuming a flat background.
+	
 	Mask-weighted means:
 		1. Background subtraction
 		2. Per detector
@@ -117,9 +94,6 @@ def apply_mask_weighting(light_curve, imx, imy, ndets, bgd_rate):
 		4. Fraction of detector illuminated (mask correction)
 		5. On axis equivalent (effective area correction for off-axis bursts)
 	"""
-
-	# Rough calculation of the background standard deviation 
-	stdev_backgroud = np.sqrt(bgd_rate)
 
 	# From imx and imy, find pcode and the angle of incidence
 	pcode = find_pcode(imx, imy)
@@ -134,47 +108,52 @@ def apply_mask_weighting(light_curve, imx, imy, ndets, bgd_rate):
 		light_curve['RATE'] *=0 # counts / sec / dets
 		return light_curve
 
-	# Use error propagation to calculate the uncertainty in the RATE for the mask-weight light curve
-	light_curve['UNC'] = np.sqrt( np.power(np.sqrt(np.abs(light_curve['RATE']))/correction,2.)+np.power(stdev_backgroud/correction,2.))
 	# Calculate the mask-weighted RATE column
-	light_curve['RATE'] = (light_curve["RATE"] - bgd_rate)/correction # background-subtracted counts / sec / dets
-
+	light_curve['RATE'] = light_curve["RATE"]/correction # background-subtracted counts / sec / dets
 
 	return light_curve
 
-def add_background(light_curve, bgd_rate, buffer, dt):
+def add_background(light_curve, t_buffer, dt):
 	"""
-	Method to add a buffer interval and a flat background to a given light curve
+	Method that adds a background interval before and after the source signal 
 
 	Attributes:
 	------------------------
 	light_curve : np.ndarray([("TIME",float), ("RATE",float), ("UNC",float)])
 		Light curve array
-	bgd_rate : float
-		Background rate (counts / sec) to be added to light curve 
 	buffer : float
 		Duration (sec) of the background interval to be added to either side of the existing light curve
 	dt : float
 		time bin size
 	"""
 
-	old_lc_size = len(light_curve)
-	old_time_start = light_curve['TIME'][0]
-	old_time_end = light_curve['TIME'][-1]
-	buffer_size = int(np.floor(buffer/dt))
+	sim_lc_length = int( (2*t_buffer/dt) + len(light_curve) ) # Length of the new light curve
 
-	# Add buffer interval to light curve 
-	buffer_interval = np.zeros(shape=buffer_size, dtype=[('TIME',float), ('RATE',float), ('UNC',float)])
-	light_curve = np.concatenate( (buffer_interval, light_curve, buffer_interval), axis=0) 
+	# Initialize an empty background light curve 
+	bgd_lc = np.zeros(shape=sim_lc_length, dtype=[('TIME', float), ('RATE',float), ('UNC',float)])
 
-	# Fill time axis value
-	light_curve['TIME'][:buffer_size] = np.arange(old_time_start - buffer, old_time_start, step=dt)[:buffer_size]
-	light_curve['TIME'][buffer_size+old_lc_size:] = np.arange(old_time_end+dt, old_time_end+buffer+dt, step=dt)[:buffer_size]
+	# Fill the time axis from synth_grb-buffer to synth_grb+buffer with correct time bin sizes 
+	bgd_lc['TIME'] = np.arange(
+		start=light_curve['TIME'][0]- t_buffer, 
+		stop= light_curve['TIME'][-1]+t_buffer+dt, 
+		step= dt
+		)[:len(bgd_lc)]
 
-	# Add flat background
-	light_curve['RATE'] += bgd_rate
+	# Pull a random background variance from the distribution created from observed values
+	variance = rand_background_variance()
+	# Correct for time-bin size
+	variance /= np.sqrt(dt)
 
-	return light_curve
+	# Fluctuate the background according to a Normal distribution around 0 with a standard variation equal to the background variance
+	bgd_lc['RATE'] = np.random.normal( loc=np.zeros(shape=len(bgd_lc)), scale=variance)
+	# Set the uncertainty of the count rate to the variance. 
+	bgd_lc['UNC'] = np.ones(shape=len(bgd_lc))*variance
+
+	len_sim = len(light_curve['RATE']) # Length of the source signal
+	argstart = np.argmax(bgd_lc['TIME']>=light_curve['TIME'][0]) # Start index of the signal in the new light curve	
+	bgd_lc[argstart: argstart+len_sim]['RATE'] += light_curve['RATE'] # Add signal to background light curve
+
+	return bgd_lc
 
 def fit_function(t,fm,tm,r,d):
 	"""
@@ -223,3 +202,141 @@ def rand_background_variance():
 	variance = distrib.rvs(size=1)
 
 	return variance
+
+def many_simulations(template_grb, param_list, trials, 
+	dur_per = 90, ndet_max=32768, 
+	sim_triggers=False, out_file_name = None, ret_ave = False, keep_synth_grbs=False, verbose=False):
+	"""
+	Method to perform multiple simulations for each combination of input parameters 
+
+	Attributes:
+	----------
+	template_grb : GRB
+		GRB object used as a template light curve and spectrum
+	param_list : np.ndarray
+		List with all combinations of redshifts, imx, imy, and ndets to simulate the template GRB with
+	trials : int
+		Number of trials for each parameter combination
+	dur_per : float
+		Duration percentage to find using Bayesian blocks, i.e., dur_pur = 90 returns the T_90 of the burst
+	ndet_max : int
+		Maximum number of detectors on the detector plane (for Swift/BAT ndet_max = 32,768)
+	sim_triggers : boolean
+		Whether or not to simulate the Swift/BAT trigger algorithms or not
+	out_file_name : string
+		File name of .txt file to write the simulation result out to. 
+	"""
+
+	# Make a list to hold the simulation results
+	sim_results = np.zeros(shape=int(len(param_list)*trials),dtype=dt_sim_res)
+	sim_result_ind = 0
+
+	if keep_synth_grbs is True:
+		synth_grb_arr = np.zeros(shape=len(param_list),dtype=GRB)
+
+	if verbose is True:
+		print("Tot number of param combinations for GRB {} = {} ".format( template_grb.grbname ,len(param_list)) )
+
+	# Simulate an observation for each parameter combination
+	# Make a Response Matrix object
+	resp_mat = ResponseMatrix()
+
+	for i in range(len(param_list)):
+		if verbose is True:
+			print("Param combination {}/{}:\n\tz = {}\n\timx, imy = {},{}\n\tndets={}".format(i+1, len(param_list), param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3]))
+	
+		# Load Swift BAT response based on the IMX, IMY position on the detector plane 
+		resp_mat.load_SwiftBAT_resp(param_list[i][1], param_list[i][2])
+		
+		for j in range(trials):
+			# if verbose is True:
+				# print("\t\tTrial ",j)
+
+			synth_grb = template_grb.copy()
+
+			sim_results[["z", "imx", "imy", "ndets"]][sim_result_ind] = (param_list[i][0], param_list[i][1], param_list[i][2], param_list[i][3])
+
+			simulate_observation(synth_grb = synth_grb, template_grb=template_grb,resp_mat=resp_mat, z_p=param_list[i][0], imx=param_list[i][1], imy=param_list[i][2], ndets=param_list[i][3], ndet_max=ndet_max, sim_triggers=sim_triggers)
+			sim_results[["DURATION", "TSTART"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=dur_per) # Find the Duration and the fluence 
+			sim_results[["T100DURATION", "T100START"]][sim_result_ind] = bayesian_t_blocks(synth_grb.light_curve, dur_per=99) # Find the Duration and the fluence 
+			sim_results[["FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["DURATION"][sim_result_ind], sim_results['TSTART'][sim_result_ind])
+			sim_results[["T100FLUENCE","1sPeakFlux"]][sim_result_ind] = calc_fluence(synth_grb.light_curve, sim_results["T100DURATION"][sim_result_ind], sim_results['T100START'][sim_result_ind])
+
+			# Increase simulation index
+			sim_result_ind +=1
+		if keep_synth_grbs is True:
+			synth_grb_arr[i] = synth_grb.copy()
+
+	if out_file_name is not None:
+		np.savetxt(out_file_name,sim_results)
+
+	if ret_ave is True:
+		sim_results = make_ave_sim_res(sim_results)
+
+	if keep_synth_grbs is True:
+		return sim_results, synth_grb_arr
+	else:
+		return sim_results
+
+def make_param_list(z_arr, imx_arr, imy_arr, ndets_arr):
+	"""
+	Method to make a list of all parameter combinations from the given parameter values.
+
+	Attributes:
+	----------
+	z_arr : np.ndarray
+		Array of redshifts to simulate the GRB at
+	imx_arr, imy_arr : np.ndarry, np.ndarray
+		Array of (imx,imy) points i.e., where the simualted sources will be located on the detector 
+	ndets_arr : np.ndarray
+		Array of values to use for the number of enabled detectors during the observation simulations
+	"""
+
+	# Make a list of all parameter combinations	
+	param_list = np.array(np.meshgrid(z_arr, imx_arr, imy_arr,ndets_arr)).T.reshape(-1,4)
+
+	return param_list
+
+
+def make_ave_sim_res(sim_results, omit_nondetections=True):
+	"""
+	Method to make an average sim_results array for each unique parameter combination
+
+	Attributes:
+	----------
+	sim_results : np.ndarray
+		sim_results array 
+	"""
+	if omit_nondetections is True:
+		sim_results = sim_results[sim_results['DURATION']>0]
+
+	unique_rows = np.unique(sim_results[["z","imx","imy","ndets"]])
+
+	ave_sim_results = np.zeros(shape=len(unique_rows),dtype=dt_sim_res)
+
+	ave_sim_results[["z","imx","imy","ndets"]] = unique_rows
+
+	for i in range(len(unique_rows)):
+		ave_sim_results["DURATION"][i] = np.sum(sim_results["DURATION"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["T100DURATION"][i] = np.sum(sim_results["T100DURATION"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["TSTART"][i] = np.sum(sim_results["TSTART"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["T100START"][i] = np.sum(sim_results["T100START"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["FLUENCE"][i] = np.sum(sim_results["FLUENCE"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["T100FLUENCE"][i] = np.sum(sim_results["FLUENCE"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+		ave_sim_results["1sPeakFlux"][i] = np.sum(sim_results["1sPeakFlux"][ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])/len(sim_results[ sim_results[["z","imx","imy","ndets"]] == unique_rows[i]])
+
+	return ave_sim_results
+
+def save_sim_results(fname, sim_results):
+	"""
+	Method to make an average sim_results array for each unique parameter combination
+
+	Attributes:
+	----------
+	fname : string
+		file name to save array to
+	sim_results : np.ndarray
+		sim_results array 
+	"""
+
+	np.save(fname, sim_results)
