@@ -15,7 +15,7 @@ from datetime import date
 from packages.class_GRB import GRB
 from packages.class_PLOTS import PLOTSIMRES, PLOTSAMPLE, PLOTGRB
 from packages.class_SPECFUNC import PL, CPL
-from packages.package_many_simulations import many_simulations, make_param_list, make_ave_sim_res
+from packages.package_simulations import many_simulations, make_param_list, make_ave_sim_res
 from util_packages.package_datatypes import dt_sim_res
 
 def make_template_grb(grbp):
@@ -35,8 +35,8 @@ def make_template_grb(grbp):
 def make_param_space(grbp):
 
 	## Make parameter space  
-	# z_arr = np.array([grbp.z])
-	z_arr = np.linspace(grbp.z, grbp.zmax, num=50)
+	z_arr = np.array([grbp.z])
+	# z_arr = np.linspace(grbp.z, grbp.zmax, num=30)
 	imx_arr = np.array([0.])
 	imy_arr = np.array([0.])
 	# imx_arr = np.linspace(-1.75,1.75,70)
@@ -48,45 +48,45 @@ def make_param_space(grbp):
 
 def main(name, template_grb, param_list, trials):
 
-	# sim_results, synth_grbs = many_simulations(template_grb, param_list, trials, multiproc=False, keep_synth_grbs=True, verbose=True)
-	sim_results = many_simulations(template_grb, param_list, trials, multiproc=False, keep_synth_grbs=False, verbose=True)
-	np.save("data_files/grb_{}/grb_{}_redshift_sim-results.tmp.txt".format(name, name), sim_results)
+	sim_results, synth_grbs = many_simulations(template_grb, param_list, trials, multiproc=False, keep_synth_grbs=True, verbose=True)
+	# sim_results = many_simulations(template_grb, param_list, trials, multiproc=False, keep_synth_grbs=False, verbose=True)
+	# np.save("data_files/grb_{}/grb_{}_redshift_sim-results.tmp.txt".format(name, name), sim_results)
 
 	# np.save("data-files/grb-{}/grb_{}_detector_sim-results.tmp.txt".format(name, name), sim_results)
 	
-	# return sim_results, synth_grbs
+	return sim_results, synth_grbs
 
 
 if __name__ == "__main__":
 
 	grbs_names = np.array([
-		"050525A",
-		"060912A",
-		"100625A",
-		"130427A",
-		"130427A_cut",
-		"050416A",
-		"060614",
-		"061021",
-		"080430",
-		"080916A",
-		"081007",
-		"090424",
-		"091018",
-		"091127",
-		"100621A",
-		"100816A",
-		"101219A",
-		"110715A",
-		"111228A",
-		"120311A",
-		"130603B",
-		"130925A",
-		"140506A",
-		"160425A",
-		"160804A",
-		"161001A",
-		"161219B",
+		# "050416A",
+		# "050525A",
+		# "060614",
+		# "060912A",
+		# "061021",
+		# "080430",
+		# "080916A",
+		# "081007", 
+		# "090424",
+		# "091018",
+		# "091127",#??
+		# "100621A",
+		# "100625A",
+		# "100816A",
+		# "101219A",
+		# "110715A",
+		# "111228A",
+		# "120311A",
+		# "130427A",
+		# "130427A_cut",
+		# "130603B",
+		# "130925A",
+		# "140506A",
+		# "160425A",
+		# "160804A",
+		# "161001A",
+		# "161219B",
 		], dtype="U11")
 
 
@@ -96,7 +96,18 @@ if __name__ == "__main__":
 		template_grb = make_template_grb(grbp) # Create template GRB
 
 		param_list = make_param_space(grbp) # Create parameter combination list 
-		trials = 1000
+		trials = 1
 
-		main(grbp.name, template_grb, param_list, trials) # Run simulations
+		sim_results, synth_grbs = main(grbp.name, template_grb, param_list, trials) # Run simulations
+
+		# plot = PLOTSIMRES() # Plot simulation results
+		# plot.redshift_evo(sim_results, t_true=grbp.t_true, log=False)
+		# plt.show()
+
+		plot = PLOTGRB()
+		ax = plt.gca()
+		plot.plot_light_curves(template_grb, ax=ax)
+		plot.plot_light_curves(synth_grbs, ax=ax)
+		plot.show()
+
 
